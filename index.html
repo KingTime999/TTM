@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="login-header">
+                <h1><i class="fas fa-tasks"></i> Task Manager</h1>
+                <p>Manage and track your work efficiently</p>
+            </div>
+            
+            <div class="login-tabs">
+                <button class="tab-btn active" onclick="switchTab('student')">Student</button>
+                <button class="tab-btn" onclick="switchTab('lecturer')">Lecturer</button>
+            </div>
+            
+            <div id="student-login" class="login-form active">
+                <h2>Student Login</h2>
+                <form onsubmit="loginStudent(event)">
+                    <div class="form-group">
+                        <label for="student-email">Email</label>
+                        <input type="email" id="student-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-password">Password</label>
+                        <input type="password" id="student-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="student-role">Role</label>
+                        <select id="student-role" required>
+                            <option value="">Select Role</option>
+                            <option value="leader">Leader</option>
+                            <option value="member">Member</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+            </div>
+            
+            <div id="lecturer-login" class="login-form">
+                <h2>Lecturer Login</h2>
+                <form onsubmit="loginLecturer(event)">
+                    <div class="form-group">
+                        <label for="lecturer-email">Email</label>
+                        <input type="email" id="lecturer-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="lecturer-password">Password</label>
+                        <input type="password" id="lecturer-password" required>
+                    </div>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html> 
