@@ -18,6 +18,7 @@ let evaluations = [];
 let projects = [];
 let memberRequests = [];
 let selectedGroupId = null;
+let invitedEmails = [];
 
 // Initialize demo data
 function initializeDemoData() {
@@ -132,6 +133,7 @@ function loginStudent(event) {
     if (student) {
         currentUser = { ...student, type: 'student' };
         showDashboard();
+        checkInvitedGroups();
     } else {
         alert('Thông tin đăng nhập không chính xác!');
     }
@@ -149,6 +151,7 @@ function loginLecturer(event) {
     if (lecturer) {
         currentUser = { ...lecturer, type: 'lecturer' };
         showDashboard();
+        checkInvitedGroups();
     } else {
         alert('Thông tin đăng nhập không chính xác!');
     }
@@ -217,12 +220,22 @@ function createLeaderDashboard() {
                             <div class="progress-bar" style="width: ${(completedTasks/myGroup.totalTasks)*100}%"></div>
                         </div>
                         <button class="btn btn-info" onclick="showAddMemberModal(${myGroup.id})">Thêm thành viên</button>
-                        <button class="btn btn-danger" onclick="deleteGroup(${myGroup.id})">Xóa nhóm</button>
+                        <button class="btn btn-danger" onclick="showLeaveGroupModal(${myGroup.id})">Rời nhóm</button>
+                        <button class="btn btn-warning" onclick="deleteGroup(${myGroup.id})">Xóa nhóm</button>
                         ${completedTasks >= myGroup.totalTasks ? 
                             '<button class="btn btn-success" onclick="showFinalEvaluation()">Xem đánh giá cuối kỳ</button>' : 
                             `<button class="btn" onclick="showCreateTaskModalForGroup(${myGroup.id})">Tạo task mới</button>`
                         }
                     </div>
+                </div>
+                <div class="section">
+                    <h2>Thành viên nhóm</h2>
+                    <ul style="margin-left:16px;">
+                        <li><b>${myGroup.leader} (Trưởng nhóm)</b></li>
+                        ${myGroup.members.map(m => `
+                            <li>${m} <button class='btn btn-danger' style='margin-left:8px;padding:2px 8px;' onclick="removeMemberFromGroup(${myGroup.id}, '${m}')">Xóa</button></li>
+                        `).join('')}
+                    </ul>
                 </div>
                 <div class="section">
                     <h2>Danh sách task của nhóm ${myGroup.name}</h2>
@@ -277,6 +290,7 @@ function createMemberDashboard() {
                     <h3>Nhóm hiện tại: ${myGroup.name}</h3>
                     <p><strong>Đề tài:</strong> ${myGroup.topic}</p>
                     <p><strong>Trưởng nhóm:</strong> ${myGroup.leader}</p>
+                    <button class="btn btn-danger" onclick="showLeaveGroupModal(${myGroup.id})">Rời nhóm</button>
                 </div>
                 <div class="section">
                     <h2>Task của tôi trong nhóm này</h2>
@@ -411,6 +425,8 @@ function renderGroups() {
                 ${groups.map(group => {
                     const groupTasks = tasks.filter(t => t.groupId === group.id);
                     const completedTasks = groupTasks.filter(t => t.status === 'completed').length;
+                    const isCurrentUserInGroup = group.leader === currentUser.name || group.members.includes(currentUser.name);
+                    
                     return `
                         <tr>
                             <td>${group.name}</td>
@@ -420,7 +436,7 @@ function renderGroups() {
                             <td>${completedTasks}/${group.totalTasks}</td>
                             <td>
                                 <button class="btn btn-secondary" onclick="viewGroup(${group.id})">Xem</button>
-                                <button class="btn btn-warning" onclick="editGroup(${group.id})">Sửa</button>
+                                ${isCurrentUserInGroup ? `<button class="btn btn-danger" onclick="showLeaveGroupModal(${group.id})">Rời nhóm</button>` : ''}
                             </td>
                         </tr>
                     `;
@@ -684,7 +700,10 @@ function showCreateGroupModal() {
                     `}
                     <div class="form-group">
                         <label>Thành viên</label>
-                        <input type="text" id="groupMembers" placeholder="Tên thành viên, phân cách bằng dấu phẩy">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="groupMembers" placeholder="Tên thành viên, phân cách bằng dấu phẩy" style="flex: 1;">
+                            <button type="button" class="btn" id="inviteMemberBtn" onclick="inviteMember()">Invite</button>
+                        </div>
                     </div>
                     <button type="submit" class="btn">Tạo nhóm</button>
                 </form>
@@ -966,6 +985,7 @@ function createGroup(event) {
     const topic = document.getElementById('groupTopic').value;
     const leader = currentUser.name;
     const members = document.getElementById('groupMembers').value.split(',').map(m => m.trim()).filter(m => m);
+    const invited = [...invitedEmails];
 
     const newGroup = {
         id: groups.length + 1,
@@ -973,6 +993,7 @@ function createGroup(event) {
         topic,
         leader,
         members,
+        invited,
         createdBy: currentUser.email,
         completedTasks: 0,
         totalTasks: 10
@@ -980,9 +1001,12 @@ function createGroup(event) {
 
     groups.push(newGroup);
     selectedGroupId = newGroup.id;
+    invitedEmails = [];
     closeModal('createGroupModal');
     showDashboard();
-    alert('Tạo nhóm thành công!');
+    
+    // Hiển thị bảng thông tin nhóm đã tạo
+    showGroupInfoTable(newGroup);
 }
 
 function createTask(event) {
@@ -1352,4 +1376,338 @@ document.addEventListener('DOMContentLoaded', function() {
     demoAccounts.lecturers.forEach(l => {
         console.log(`- ${l.email} / ${l.password}`);
     });
-}); 
+});
+
+function inviteMember() {
+    // Hiện modal nhập email
+    const modalHTML = `
+        <div id="inviteModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('inviteModal')">&times;</span>
+                <h2>Mời thành viên vào nhóm</h2>
+                <form onsubmit="addInvitedEmail(event)">
+                    <div class="form-group">
+                        <label>Email thành viên</label>
+                        <input type="email" id="inviteEmail" placeholder="Nhập email thành viên" required>
+                    </div>
+                    <button type="submit" class="btn">Thêm email</button>
+                </form>
+                <div id="invitedEmailList" style="margin-top:16px;"></div>
+                <button class="btn" onclick="closeModal('inviteModal')">Đóng</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('inviteModal').style.display = 'block';
+    renderInvitedEmailList();
+}
+
+function addInvitedEmail(event) {
+    event.preventDefault();
+    const email = document.getElementById('inviteEmail').value.trim();
+    if (email && !invitedEmails.includes(email)) {
+        invitedEmails.push(email);
+        renderInvitedEmailList();
+        document.getElementById('inviteEmail').value = '';
+    }
+}
+
+function renderInvitedEmailList() {
+    const listDiv = document.getElementById('invitedEmailList');
+    if (!listDiv) return;
+    if (invitedEmails.length === 0) {
+        listDiv.innerHTML = '<i>Chưa có email nào được mời.</i>';
+    } else {
+        listDiv.innerHTML = '<b>Đã mời:</b><ul style="margin:8px 0 0 16px;">' +
+            invitedEmails.map(email => `<li>${email} <button onclick=\"removeInvitedEmail('${email}')\" style=\"margin-left:8px;color:red;\">X</button></li>`).join('') +
+            '</ul>';
+    }
+}
+
+function removeInvitedEmail(email) {
+    invitedEmails = invitedEmails.filter(e => e !== email);
+    renderInvitedEmailList();
+}
+
+function checkInvitedGroups() {
+    if (!currentUser || !currentUser.email) return;
+    const invitedGroups = groups.filter(g => g.invited && g.invited.includes(currentUser.email));
+    if (invitedGroups.length > 0) {
+        invitedGroups.forEach(g => {
+            // Hiện modal join group
+            const modalId = `joinInvitedGroupModal_${g.id}`;
+            if (document.getElementById(modalId)) return;
+            const modalHTML = `
+                <div id="${modalId}" class="modal">
+                    <div class="modal-content">
+                        <span class="close" onclick="closeModal('${modalId}')">&times;</span>
+                        <h2>Bạn được mời vào nhóm: ${g.name}</h2>
+                        <p>Chủ đề: <b>${g.topic}</b></p>
+                        <button class="btn" onclick="acceptInviteToGroup(${g.id}, '${currentUser.email}', '${modalId}')">Tham gia nhóm</button>
+                        <button class="btn" onclick="closeModal('${modalId}')">Từ chối</button>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            document.getElementById(modalId).style.display = 'block';
+        });
+    }
+}
+
+function acceptInviteToGroup(groupId, email, modalId) {
+    const group = groups.find(g => g.id === groupId);
+    if (group) {
+        // Thêm tên vào members nếu chưa có
+        if (!group.members.includes(currentUser.name)) {
+            group.members.push(currentUser.name);
+        }
+        // Xóa email khỏi danh sách mời
+        group.invited = group.invited.filter(e => e !== email);
+        closeModal(modalId);
+        showDashboard();
+        alert('Bạn đã tham gia nhóm thành công!');
+    }
+}
+
+// Thêm hàm xóa thành viên khỏi nhóm
+function removeMemberFromGroup(groupId, memberName) {
+    const group = groups.find(g => g.id === groupId);
+    if (group) {
+        group.members = group.members.filter(m => m !== memberName);
+        showDashboard();
+        alert(`Đã xóa thành viên ${memberName} khỏi nhóm!`);
+    }
+}
+
+// Hàm hiển thị bảng thông tin nhóm sau khi tạo
+function showGroupInfoTable(group) {
+    const modalHTML = `
+        <div id="groupInfoModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('groupInfoModal')">&times;</span>
+                <h2><i class="fas fa-check-circle"></i> Tạo nhóm thành công!</h2>
+                <div class="group-info-table">
+                    <h3>Thông tin nhóm đã tạo:</h3>
+                    <table class="info-table">
+                        <tr>
+                            <th>Thông tin</th>
+                            <th>Chi tiết</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Tên nhóm:</strong></td>
+                            <td>${group.name}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Chủ đề:</strong></td>
+                            <td>${group.topic}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Trưởng nhóm:</strong></td>
+                            <td>${group.leader}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Thành viên:</strong></td>
+                            <td>${group.members.length > 0 ? group.members.join(', ') : 'Chưa có thành viên'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email đã mời:</strong></td>
+                            <td>${group.invited.length > 0 ? group.invited.join(', ') : 'Không có'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ID nhóm:</strong></td>
+                            <td>${group.id}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ngày tạo:</strong></td>
+                            <td>${new Date().toLocaleDateString('vi-VN')}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="closeModal('groupInfoModal')">Đóng</button>
+                    <button class="btn btn-secondary" onclick="printGroupInfo()">In thông tin</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('groupInfoModal').style.display = 'block';
+}
+
+// Hàm in thông tin nhóm
+function printGroupInfo() {
+    const printWindow = window.open('', '_blank');
+    const group = groups[groups.length - 1]; // Lấy nhóm vừa tạo
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Thông tin nhóm - ${group.name}</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; }
+                table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+                th { background-color: #f2f2f2; font-weight: bold; }
+                h1 { color: #333; text-align: center; }
+                .header { text-align: center; margin-bottom: 30px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>Thông tin nhóm</h1>
+                <p>Ngày tạo: ${new Date().toLocaleDateString('vi-VN')}</p>
+            </div>
+            <table>
+                <tr>
+                    <th>Thông tin</th>
+                    <th>Chi tiết</th>
+                </tr>
+                <tr>
+                    <td><strong>Tên nhóm:</strong></td>
+                    <td>${group.name}</td>
+                </tr>
+                <tr>
+                    <td><strong>Chủ đề:</strong></td>
+                    <td>${group.topic}</td>
+                </tr>
+                <tr>
+                    <td><strong>Trưởng nhóm:</strong></td>
+                    <td>${group.leader}</td>
+                </tr>
+                <tr>
+                    <td><strong>Thành viên:</strong></td>
+                    <td>${group.members.length > 0 ? group.members.join(', ') : 'Chưa có thành viên'}</td>
+                </tr>
+                <tr>
+                    <td><strong>Email đã mời:</strong></td>
+                    <td>${group.invited.length > 0 ? group.invited.join(', ') : 'Không có'}</td>
+                </tr>
+                <tr>
+                    <td><strong>ID nhóm:</strong></td>
+                    <td>${group.id}</td>
+                </tr>
+            </table>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Hàm hiển thị modal rời nhóm
+function showLeaveGroupModal(groupId) {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const isLeader = group.leader === currentUser.name;
+    const isMember = group.members.includes(currentUser.name);
+    
+    if (!isLeader && !isMember) {
+        alert('Bạn không phải thành viên của nhóm này!');
+        return;
+    }
+    
+    let modalHTML = `
+        <div id="leaveGroupModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('leaveGroupModal')">&times;</span>
+                <h2><i class="fas fa-sign-out-alt"></i> Rời nhóm</h2>
+                <div class="leave-group-info">
+                    <h3>Thông tin nhóm:</h3>
+                    <p><strong>Tên nhóm:</strong> ${group.name}</p>
+                    <p><strong>Chủ đề:</strong> ${group.topic}</p>
+                    <p><strong>Vai trò của bạn:</strong> ${isLeader ? 'Trưởng nhóm' : 'Thành viên'}</p>
+                </div>
+    `;
+    
+    if (isLeader) {
+        // Nếu là leader, hiển thị tùy chọn trao quyền
+        const otherMembers = group.members.filter(m => m !== currentUser.name);
+        if (otherMembers.length > 0) {
+            modalHTML += `
+                <div class="transfer-leadership">
+                    <h3>Trao quyền trưởng nhóm:</h3>
+                    <p>Bạn có muốn trao quyền trưởng nhóm cho thành viên khác không?</p>
+                    <div class="form-group">
+                        <label>Chọn thành viên mới:</label>
+                        <select id="newLeaderSelect">
+                            ${otherMembers.map(member => `<option value="${member}">${member}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-warning" onclick="leaveGroupAsLeader(${groupId})">Trao quyền và rời nhóm</button>
+                        <button class="btn btn-secondary" onclick="closeModal('leaveGroupModal')">Hủy</button>
+                    </div>
+                </div>
+            `;
+        } else {
+            modalHTML += `
+                <div class="no-members">
+                    <p><strong>Lưu ý:</strong> Bạn là thành viên duy nhất trong nhóm. Nếu rời nhóm, nhóm sẽ bị xóa.</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-danger" onclick="deleteGroup(${groupId})">Xóa nhóm</button>
+                        <button class="btn btn-secondary" onclick="closeModal('leaveGroupModal')">Hủy</button>
+                    </div>
+                </div>
+            `;
+        }
+    } else {
+        // Nếu là member thường
+        modalHTML += `
+            <div class="leave-confirmation">
+                <p>Bạn có chắc chắn muốn rời khỏi nhóm này?</p>
+                <div class="modal-actions">
+                    <button class="btn btn-danger" onclick="leaveGroupAsMember(${groupId})">Rời nhóm</button>
+                    <button class="btn btn-secondary" onclick="closeModal('leaveGroupModal')">Hủy</button>
+                </div>
+            </div>
+        `;
+    }
+    
+    modalHTML += `
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('leaveGroupModal').style.display = 'block';
+}
+
+// Hàm rời nhóm khi là leader và trao quyền
+function leaveGroupAsLeader(groupId) {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const newLeader = document.getElementById('newLeaderSelect').value;
+    if (!newLeader) {
+        alert('Vui lòng chọn thành viên mới!');
+        return;
+    }
+    
+    // Trao quyền cho thành viên mới
+    group.leader = newLeader;
+    group.members = group.members.filter(m => m !== newLeader);
+    
+    // Xóa leader cũ khỏi members
+    group.members = group.members.filter(m => m !== currentUser.name);
+    
+    closeModal('leaveGroupModal');
+    showDashboard();
+    alert(`Đã trao quyền trưởng nhóm cho ${newLeader} và rời khỏi nhóm thành công!`);
+}
+
+
+
+// Hàm rời nhóm khi là member thường
+function leaveGroupAsMember(groupId) {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    // Xóa member khỏi nhóm
+    group.members = group.members.filter(m => m !== currentUser.name);
+    
+    closeModal('leaveGroupModal');
+    showDashboard();
+    alert('Đã rời khỏi nhóm thành công!');
+} 
