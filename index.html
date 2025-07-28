@@ -24,20 +24,12 @@
                 <h2>Student Login</h2>
                 <form onsubmit="loginStudent(event)">
                     <div class="form-group">
-                        <label for="student-email">Email</label>
+                        <label for="student-email">Email <span style="color: red;">*</span></label>
                         <input type="email" id="student-email" required>
                     </div>
                     <div class="form-group">
-                        <label for="student-password">Password</label>
+                        <label for="student-password">Password <span style="color: red;">*</span></label>
                         <input type="password" id="student-password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="student-role">Role</label>
-                        <select id="student-role" required>
-                            <option value="">Select Role</option>
-                            <option value="leader">Leader</option>
-                            <option value="member">Member</option>
-                        </select>
                     </div>
                     <button type="submit" class="login-btn">Login</button>
                 </form>
@@ -47,11 +39,11 @@
                 <h2>Lecturer Login</h2>
                 <form onsubmit="loginLecturer(event)">
                     <div class="form-group">
-                        <label for="lecturer-email">Email</label>
+                        <label for="lecturer-email">Email <span style="color: red;">*</span></label>
                         <input type="email" id="lecturer-email" required>
                     </div>
                     <div class="form-group">
-                        <label for="lecturer-password">Password</label>
+                        <label for="lecturer-password">Password <span style="color: red;">*</span></label>
                         <input type="password" id="lecturer-password" required>
                     </div>
                     <button type="submit" class="login-btn">Login</button>

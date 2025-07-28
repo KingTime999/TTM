@@ -124,16 +124,18 @@ function loginStudent(event) {
     event.preventDefault();
     const email = document.getElementById('student-email').value;
     const password = document.getElementById('student-password').value;
-    const role = document.getElementById('student-role').value;
 
     const student = demoAccounts.students.find(s => 
-        s.email === email && s.password === password && s.role === role
+        s.email === email && s.password === password 
     );
 
     if (student) {
         currentUser = { ...student, type: 'student' };
         showDashboard();
-        checkInvitedGroups();
+        // Chỉ member mới kiểm tra lời mời nhóm
+        if (student.role === 'member') {
+            checkInvitedGroups();
+        }
     } else {
         alert('Thông tin đăng nhập không chính xác!');
     }
@@ -253,8 +255,8 @@ function createLeaderDashboard() {
                             <div class="stat-label">Task hoàn thành</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-number">${myGroup.members.length + 1}</div>
-                            <div class="stat-label">Thành viên</div>
+                            <div class="stat-number">${groupTasks.length > 0 ? Math.round((completedTasks/groupTasks.length)*100) : 0}%</div>
+                            <div class="stat-label">% đã hoàn thành</div>
                         </div>
                     </div>
                 </div>
@@ -264,6 +266,22 @@ function createLeaderDashboard() {
     if (typeof renderMemberRequests === 'function') {
         dashboard += `<div class="section"><h2>Yêu cầu tham gia nhóm</h2>${renderMemberRequests()}</div>`;
     }
+    
+    // Thêm phần đánh giá thành viên
+    if (myGroups.length > 0) {
+        const myGroup = myGroups.find(g => g.id === selectedGroupId);
+        if (myGroup) {
+            dashboard += `
+                <div class="section">
+                    <h2>Bảng đánh giá thành viên</h2>
+                    <button class="btn btn-primary" onclick="showMemberEvaluationModal(${myGroup.id})">Tạo đánh giá thành viên</button>
+                    <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">Xem đánh giá</button>
+                    <div id="memberEvaluationDisplay"></div>
+                </div>
+            `;
+        }
+    }
+    
     return dashboard;
 }
 
@@ -279,7 +297,8 @@ function createMemberDashboard() {
             <select id="groupSwitcher" onchange="switchGroup()">
                 ${myGroups.map(g => `<option value="${g.id}" ${g.id === selectedGroupId ? 'selected' : ''}>${g.name}</option>`).join('')}
             </select>
-            <button class="btn" onclick="showJoinGroupModal()">Gửi yêu cầu tham gia nhóm</button>
+            <button class="btn" onclick="showInviteNotificationsModal()">Thông báo</button>
+            <button class="btn" onclick="showJoinGroupModal()">Yêu cầu vào nhóm</button>
         </div>
     `;
     if (myGroups.length > 0) {
@@ -291,10 +310,21 @@ function createMemberDashboard() {
                     <p><strong>Đề tài:</strong> ${myGroup.topic}</p>
                     <p><strong>Trưởng nhóm:</strong> ${myGroup.leader}</p>
                     <button class="btn btn-danger" onclick="showLeaveGroupModal(${myGroup.id})">Rời nhóm</button>
+                    <button class="btn btn-primary" onclick="showCreateTaskModalForGroup(${myGroup.id})">Tạo task mới</button>
                 </div>
                 <div class="section">
                     <h2>Task của tôi trong nhóm này</h2>
                     ${renderMyTasksForGroup(myGroup.id)}
+                </div>
+                <div class="section">
+                    <h2>Tất cả task trong nhóm</h2>
+                    ${renderTasksForGroup(myGroup.id)}
+                </div>
+                <div class="section">
+                    <h2>Đánh giá thành viên</h2>
+                    <button class="btn btn-primary" onclick="showMemberEvaluationModal(${myGroup.id})">Tạo đánh giá thành viên</button>
+                    <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">Xem đánh giá của tôi</button>
+                    <div id="memberEvaluationDisplay"></div>
                 </div>
             `;
         }
@@ -498,20 +528,27 @@ function renderTasks() {
                 </tr>
             </thead>
             <tbody>
-                ${tasks.map(task => `
-                    <tr>
-                        <td>${task.title}</td>
-                        <td>${task.description}</td>
-                        <td>${task.assignedTo}</td>
-                        <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
-                        <td>${task.deadline}</td>
-                        <td>
-                            <button class="btn btn-secondary" onclick="viewTask(${task.id})">Xem</button>
-                            <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>
-                            <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
-                        </td>
-                    </tr>
-                `).join('')}
+                ${tasks.map(task => {
+                    const filesInfo = task.attachedFiles && task.attachedFiles.length > 0 ? 
+                        `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+                            📎 ${task.attachedFiles.length} file đính kèm
+                        </div>` : '';
+                    
+                    return `
+                        <tr>
+                            <td>${task.title}</td>
+                            <td>${task.description}${filesInfo}</td>
+                            <td>${task.assignedTo}</td>
+                            <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
+                            <td>${task.deadline}</td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="viewTask(${task.id})">Xem</button>
+                                <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>
+                                <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
             </tbody>
         </table>
     `;
@@ -541,10 +578,16 @@ function renderMyTasks() {
                     const workTime = task.completedTime ? 
                         Math.round((new Date(task.completedTime) - new Date(task.startTime)) / (1000 * 60 * 60 * 24)) : 
                         Math.round((new Date() - new Date(task.startTime)) / (1000 * 60 * 60 * 24));
+                    
+                    const filesInfo = task.attachedFiles && task.attachedFiles.length > 0 ? 
+                        `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+                            📎 ${task.attachedFiles.length} file đính kèm
+                        </div>` : '';
+                    
                     return `
                         <tr>
                             <td>${task.title}</td>
-                            <td>${task.description}</td>
+                            <td>${task.description}${filesInfo}</td>
                             <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
                             <td>${task.deadline}</td>
                             <td>${workTime} ngày</td>
@@ -631,20 +674,20 @@ function showCreateProjectModal() {
                 <h2>Tạo dự án mới</h2>
                 <form onsubmit="createProject(event)">
                     <div class="form-group">
-                        <label>Tên dự án</label>
+                        <label>Tên dự án <span style="color: red;">*</span></label>
                         <input type="text" id="projectName" required>
                     </div>
                     <div class="form-group">
-                        <label>Mô tả</label>
+                        <label>Mô tả <span style="color: red;">*</span></label>
                         <textarea id="projectDescription" required></textarea>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Deadline</label>
+                            <label>Deadline <span style="color: red;">*</span></label>
                             <input type="date" id="projectDeadline" required>
                         </div>
                         <div class="form-group">
-                            <label>Số nhóm tối đa</label>
+                            <label>Số nhóm tối đa <span style="color: red;">*</span></label>
                             <input type="number" id="maxGroups" min="1" max="10" value="5" required>
                         </div>
                     </div>
@@ -667,7 +710,7 @@ function showCreateGroupModal() {
                 <form onsubmit="createGroup(event)">
                     ${currentUser.type === 'lecturer' ? `
                         <div class="form-group">
-                            <label>Dự án</label>
+                            <label>Dự án <span style="color: red;">*</span></label>
                             <select id="groupProject" required>
                                 <option value="">Chọn dự án</option>
                                 ${projects.map(project => `<option value="${project.id}">${project.name}</option>`).join('')}
@@ -675,16 +718,16 @@ function showCreateGroupModal() {
                         </div>
                     ` : ''}
                     <div class="form-group">
-                        <label>Tên nhóm</label>
+                        <label>Tên nhóm <span style="color: red;">*</span></label>
                         <input type="text" id="groupName" required>
                     </div>
                     <div class="form-group">
-                        <label>Tên đề tài</label>
+                        <label>Tên đề tài <span style="color: red;">*</span></label>
                         <input type="text" id="groupTopic" required>
                     </div>
                     ${currentUser.type === 'lecturer' ? `
                         <div class="form-group">
-                            <label>Trưởng nhóm</label>
+                            <label>Trưởng nhóm <span style="color: red;">*</span></label>
                             <select id="groupLeader" required>
                                 <option value="">Chọn trưởng nhóm</option>
                                 <option value="Nguyễn Văn A">Nguyễn Văn A</option>
@@ -723,16 +766,16 @@ function showCreateTaskModal() {
                 <h2>Tạo task mới</h2>
                 <form onsubmit="createTask(event)">
                     <div class="form-group">
-                        <label>Tiêu đề task</label>
+                        <label>Tiêu đề task <span style="color: red;">*</span></label>
                         <input type="text" id="taskTitle" required>
                     </div>
                     <div class="form-group">
-                        <label>Mô tả</label>
+                        <label>Mô tả <span style="color: red;">*</span></label>
                         <textarea id="taskDescription" required></textarea>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Người thực hiện</label>
+                            <label>Người thực hiện <span style="color: red;">*</span></label>
                             <select id="taskAssignee" required>
                                 <option value="">Chọn người thực hiện</option>
                                 <option value="Nguyễn Văn A">Nguyễn Văn A</option>
@@ -741,7 +784,7 @@ function showCreateTaskModal() {
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>Độ ưu tiên</label>
+                            <label>Độ ưu tiên <span style="color: red;">*</span></label>
                             <select id="taskPriority" required onchange="updateAutoDeadline()">
                                 <option value="low">Thấp</option>
                                 <option value="medium">Trung bình</option>
@@ -751,13 +794,21 @@ function showCreateTaskModal() {
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Deadline (AI tự động)</label>
+                            <label>Deadline (AI tự động) <span style="color: red;">*</span></label>
                             <input type="date" id="taskDeadline" required>
                         </div>
                         <div class="form-group">
                             <label>Cho phép chỉnh sửa deadline</label>
                             <input type="checkbox" id="allowDeadlineEdit" checked>
                         </div>
+                    </div>
+                    <div class="form-group">
+                        <label>File đính kèm</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="file" id="taskFiles" multiple style="flex: 1;" onchange="handleFileSelection()">
+                            <button type="button" class="btn" onclick="document.getElementById('taskFiles').click()">Add File</button>
+                        </div>
+                        <div id="selectedFilesList" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
                     </div>
                     <button type="submit" class="btn">Tạo task</button>
                 </form>
@@ -774,6 +825,8 @@ function showCreateTaskModal() {
 
 function showJoinGroupModal() {
     const availableGroups = groups.filter(g => g.members.length < 4 && g.leader !== currentUser.name && !g.members.includes(currentUser.name));
+    // Lấy danh sách trưởng nhóm duy nhất
+    const leaders = [...new Set(availableGroups.map(g => g.leader))];
     const modalHTML = `
         <div id="joinGroupModal" class="modal">
             <div class="modal-content">
@@ -781,11 +834,18 @@ function showJoinGroupModal() {
                 <h2>Gửi yêu cầu tham gia nhóm</h2>
                 <form onsubmit="joinGroup(event)">
                     <div class="form-group">
-                        <label>Chọn nhóm</label>
+                        <label>Chọn trưởng nhóm</label>
+                        <select id="leaderFilter" onchange="filterGroupsByLeader()">
+                            <option value="">Tất cả</option>
+                            ${leaders.map(leader => `<option value="${leader}">${leader}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Chọn nhóm <span style="color: red;">*</span></label>
                         <select id="selectedGroup" required>
                             <option value="">Chọn nhóm muốn tham gia</option>
                             ${availableGroups.map(group => `
-                                <option value="${group.id}">${group.name} - ${group.topic} (${group.members.length}/4 thành viên)</option>
+                                <option value="${group.id}" data-leader="${group.leader}">${group.name} - ${group.topic} (${group.members.length}/4 thành viên)</option>
                             `).join('')}
                         </select>
                     </div>
@@ -796,6 +856,25 @@ function showJoinGroupModal() {
     `;
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.getElementById('joinGroupModal').style.display = 'block';
+}
+
+// Hàm lọc nhóm theo trưởng nhóm
+function filterGroupsByLeader() {
+    const leader = document.getElementById('leaderFilter').value;
+    const groupSelect = document.getElementById('selectedGroup');
+    // Ẩn/hiện option theo leader
+    for (let option of groupSelect.options) {
+        if (!option.value) continue; // bỏ qua option mặc định
+        if (!leader || option.getAttribute('data-leader') === leader) {
+            option.style.display = '';
+        } else {
+            option.style.display = 'none';
+        }
+    }
+    // Reset lại chọn nhóm nếu nhóm đang chọn không thuộc leader đã chọn
+    if (groupSelect.selectedIndex > 0 && leader && groupSelect.options[groupSelect.selectedIndex].getAttribute('data-leader') !== leader) {
+        groupSelect.selectedIndex = 0;
+    }
 }
 
 function showFinalEvaluation() {
@@ -984,8 +1063,8 @@ function createGroup(event) {
     const name = document.getElementById('groupName').value;
     const topic = document.getElementById('groupTopic').value;
     const leader = currentUser.name;
-    const members = document.getElementById('groupMembers').value.split(',').map(m => m.trim()).filter(m => m);
-    const invited = [...invitedEmails];
+    const members = []; // Khi tạo nhóm, chỉ có leader là thành viên, không thêm member nào
+    const invited = []; // Không mời ai khi tạo nhóm
 
     const newGroup = {
         id: groups.length + 1,
@@ -1017,6 +1096,14 @@ function createTask(event) {
     const deadline = document.getElementById('taskDeadline').value;
     const priority = document.getElementById('taskPriority').value;
     const allowEdit = document.getElementById('allowDeadlineEdit').checked;
+    
+    // Lấy danh sách file đã chọn
+    const fileInput = document.getElementById('taskFiles');
+    const selectedFiles = Array.from(fileInput.files).map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type
+    }));
 
     const myGroup = groups.find(g => g.leader === currentUser.name);
     
@@ -1032,7 +1119,8 @@ function createTask(event) {
         startTime: new Date().toISOString().split('T')[0],
         completedTime: null,
         extensionRequests: [],
-        allowDeadlineEdit: allowEdit
+        allowDeadlineEdit: allowEdit,
+        attachedFiles: selectedFiles
     };
 
     tasks.push(newTask);
@@ -1040,6 +1128,379 @@ function createTask(event) {
     closeModal('createTaskModal');
     showDashboard();
     alert('Tạo task thành công!');
+}
+
+// Hàm xử lý khi chọn file
+function handleFileSelection() {
+    const fileInput = document.getElementById('taskFiles');
+    const filesList = document.getElementById('selectedFilesList');
+    
+    if (fileInput.files.length > 0) {
+        const filesArray = Array.from(fileInput.files);
+        const filesHTML = filesArray.map(file => {
+            const sizeInKB = (file.size / 1024).toFixed(2);
+            return `<div style="margin: 4px 0; padding: 4px; background: #f5f5f5; border-radius: 4px;">
+                📎 ${file.name} (${sizeInKB} KB)
+            </div>`;
+        }).join('');
+        filesList.innerHTML = filesHTML;
+    } else {
+        filesList.innerHTML = '';
+    }
+}
+
+// Hàm hiển thị modal tạo đánh giá thành viên
+function showMemberEvaluationModal(groupId) {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return;
+    
+    const allMembers = [group.leader, ...group.members];
+    const isLeader = currentUser.name === group.leader;
+    
+    // Leader và member đều không thể đánh giá chính mình
+    const evaluatableMembers = allMembers.filter(member => member !== currentUser.name);
+    
+    const modalHTML = `
+        <div id="memberEvaluationModal" class="modal">
+            <div class="modal-content" style="max-width: 800px;">
+                <span class="close" onclick="closeModal('memberEvaluationModal')">&times;</span>
+                <h2>Tạo đánh giá thành viên - Nhóm: ${group.name}</h2>
+                <form onsubmit="createMemberEvaluation(event, ${groupId})">
+                    <input type="hidden" id="evaluator" value="${currentUser.name}">
+                    <div class="form-group">
+                        <label>Người được đánh giá <span style="color: red;">*</span></label>
+                        <select id="evaluated" required>
+                            <option value="">Chọn người được đánh giá</option>
+                            ${evaluatableMembers.map(member => `<option value="${member}">${member}</option>`).join('')}
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Làm việc nhóm (1-10) <span style="color: red;">*</span></label>
+                            <input type="number" id="teamwork" min="1" max="10" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Trách nhiệm (1-10) <span style="color: red;">*</span></label>
+                            <input type="number" id="responsibility" min="1" max="10" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Chất lượng công việc (1-10) <span style="color: red;">*</span></label>
+                            <input type="number" id="quality" min="1" max="10" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Đúng hạn (1-10) <span style="color: red;">*</span></label>
+                            <input type="number" id="punctuality" min="1" max="10" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Nhận xét</label>
+                        <textarea id="comment" rows="3" placeholder="Nhập nhận xét về thành viên..."></textarea>
+                    </div>
+                    <button type="submit" class="btn">Tạo đánh giá</button>
+                </form>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('memberEvaluationModal').style.display = 'block';
+}
+
+// Hàm tạo đánh giá thành viên
+function createMemberEvaluation(event, groupId) {
+    event.preventDefault();
+    
+    const evaluator = document.getElementById('evaluator').value;
+    const evaluated = document.getElementById('evaluated').value;
+    const teamwork = parseInt(document.getElementById('teamwork').value);
+    const responsibility = parseInt(document.getElementById('responsibility').value);
+    const quality = parseInt(document.getElementById('quality').value);
+    const punctuality = parseInt(document.getElementById('punctuality').value);
+    const comment = document.getElementById('comment').value;
+    
+    // Kiểm tra không đánh giá chính mình
+    if (evaluator === evaluated) {
+        alert('Không thể đánh giá chính mình!');
+        return;
+    }
+    
+    // Tính điểm trung bình
+    const averageScore = Math.round((teamwork + responsibility + quality + punctuality) / 4);
+    
+    const evaluation = {
+        id: Date.now(),
+        groupId: groupId,
+        evaluator: evaluator,
+        evaluated: evaluated,
+        score: averageScore,
+        comment: comment || 'Không có nhận xét',
+        criteria: {
+            teamwork: teamwork,
+            responsibility: responsibility,
+            quality: quality,
+            punctuality: punctuality
+        },
+        createdAt: new Date().toISOString()
+    };
+    
+    // Lưu đánh giá vào localStorage hoặc biến global
+    if (!window.memberEvaluations) window.memberEvaluations = [];
+    window.memberEvaluations.push(evaluation);
+    
+    closeModal('memberEvaluationModal');
+    showDashboard();
+    alert('Đã tạo đánh giá thành công!');
+}
+
+// Hàm xem đánh giá thành viên
+function viewMemberEvaluation(groupId) {
+    if (!window.memberEvaluations) window.memberEvaluations = [];
+    const groupEvaluations = window.memberEvaluations.filter(e => e.groupId === groupId);
+    const group = groups.find(g => g.id === groupId);
+    const isLeader = currentUser.name === group.leader;
+    
+    if (groupEvaluations.length === 0) {
+        alert('Chưa có đánh giá nào cho nhóm này!');
+        return;
+    }
+    
+    // Lọc đánh giá theo quyền
+    let filteredEvaluations = groupEvaluations;
+    let modalTitle = `Bảng đánh giá thành viên - Nhóm: ${group.name}`;
+    
+    if (!isLeader) {
+        // Member chỉ xem được đánh giá của chính mình
+        filteredEvaluations = groupEvaluations.filter(eval => eval.evaluated === currentUser.name);
+        modalTitle = `Đánh giá của tôi - Nhóm: ${group.name}`;
+        
+        if (filteredEvaluations.length === 0) {
+            alert('Chưa có đánh giá nào cho bạn!');
+            return;
+        }
+    }
+    
+    const modalHTML = `
+        <div id="viewEvaluationModal" class="modal">
+            <div class="modal-content" style="max-width: 900px;">
+                <span class="close" onclick="closeModal('viewEvaluationModal')">&times;</span>
+                <h2>${modalTitle}</h2>
+                <div style="max-height: 500px; overflow-y: auto;">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Người đánh giá</th>
+                                <th>Người được đánh giá</th>
+                                <th>Làm việc nhóm</th>
+                                <th>Trách nhiệm</th>
+                                <th>Chất lượng</th>
+                                <th>Đúng hạn</th>
+                                <th>Điểm TB</th>
+                                <th>Nhận xét</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${filteredEvaluations.map(eval => `
+                                <tr>
+                                    <td>${eval.evaluator}</td>
+                                    <td>${eval.evaluated}</td>
+                                    <td>${eval.criteria.teamwork}/10</td>
+                                    <td>${eval.criteria.responsibility}/10</td>
+                                    <td>${eval.criteria.quality}/10</td>
+                                    <td>${eval.criteria.punctuality}/10</td>
+                                    <td><strong>${eval.score}/10</strong></td>
+                                    <td>${eval.comment}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                ${isLeader ? `
+                    <div style="margin-top: 20px;">
+                        <h3>Thống kê đánh giá</h3>
+                        ${generateEvaluationStats(groupEvaluations)}
+                    </div>
+                ` : ''}
+                <button class="btn" onclick="closeModal('viewEvaluationModal')">Đóng</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('viewEvaluationModal').style.display = 'block';
+}
+
+// Hàm tạo thống kê đánh giá
+function generateEvaluationStats(evaluations) {
+    const memberStats = {};
+    
+    // Tính điểm trung bình cho từng thành viên
+    evaluations.forEach(eval => {
+        if (!memberStats[eval.evaluated]) {
+            memberStats[eval.evaluated] = {
+                totalScore: 0,
+                count: 0,
+                criteria: { teamwork: 0, responsibility: 0, quality: 0, punctuality: 0 }
+            };
+        }
+        memberStats[eval.evaluated].totalScore += eval.score;
+        memberStats[eval.evaluated].count += 1;
+        memberStats[eval.evaluated].criteria.teamwork += eval.criteria.teamwork;
+        memberStats[eval.evaluated].criteria.responsibility += eval.criteria.responsibility;
+        memberStats[eval.evaluated].criteria.quality += eval.criteria.quality;
+        memberStats[eval.evaluated].criteria.punctuality += eval.criteria.punctuality;
+    });
+    
+    let statsHTML = '<div class="stats-grid">';
+    Object.keys(memberStats).forEach(member => {
+        const stats = memberStats[member];
+        const avgScore = Math.round(stats.totalScore / stats.count);
+        const avgTeamwork = Math.round(stats.criteria.teamwork / stats.count);
+        const avgResponsibility = Math.round(stats.criteria.responsibility / stats.count);
+        const avgQuality = Math.round(stats.criteria.quality / stats.count);
+        const avgPunctuality = Math.round(stats.criteria.punctuality / stats.count);
+        
+        statsHTML += `
+            <div class="stat-card">
+                <h4>${member}</h4>
+                <div class="stat-number">${avgScore}/10</div>
+                <div class="stat-label">Điểm trung bình</div>
+                <div style="font-size: 12px; margin-top: 8px;">
+                    <div>Làm việc nhóm: ${avgTeamwork}/10</div>
+                    <div>Trách nhiệm: ${avgResponsibility}/10</div>
+                    <div>Chất lượng: ${avgQuality}/10</div>
+                    <div>Đúng hạn: ${avgPunctuality}/10</div>
+                </div>
+            </div>
+        `;
+    });
+    statsHTML += '</div>';
+    
+    return statsHTML;
+}
+
+// Hàm xem chi tiết task
+function viewTask(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) {
+        alert('Không tìm thấy task!');
+        return;
+    }
+    
+    const group = groups.find(g => g.id === task.groupId);
+    const startDate = task.startTime || 'Chưa bắt đầu';
+    const endDate = task.completedTime || 'Chưa hoàn thành';
+    const statusText = getStatusText(task.status);
+    
+    // Tính thời gian làm việc
+    let workTime = 'Chưa tính được';
+    if (task.startTime && task.completedTime) {
+        const start = new Date(task.startTime);
+        const end = new Date(task.completedTime);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        workTime = `${diffDays} ngày`;
+    } else if (task.startTime) {
+        const start = new Date(task.startTime);
+        const now = new Date();
+        const diffTime = Math.abs(now - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        workTime = `${diffDays} ngày (đang thực hiện)`;
+    }
+    
+    // Hiển thị file đính kèm
+    const filesInfo = task.attachedFiles && task.attachedFiles.length > 0 ? 
+        `<div style="margin-top: 10px;">
+            <h4>File đính kèm (${task.attachedFiles.length} file):</h4>
+            <ul style="margin-left: 20px;">
+                ${task.attachedFiles.map(file => `
+                    <li>📎 ${file.name} (${(file.size / 1024).toFixed(2)} KB)</li>
+                `).join('')}
+            </ul>
+        </div>` : '<p><em>Không có file đính kèm</em></p>';
+    
+    const modalHTML = `
+        <div id="viewTaskModal" class="modal">
+            <div class="modal-content" style="max-width: 700px;">
+                <span class="close" onclick="closeModal('viewTaskModal')">&times;</span>
+                <h2>Chi tiết Task: ${task.title}</h2>
+                
+                <div class="task-detail-section">
+                    <h3>Thông tin cơ bản</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label><strong>Tiêu đề:</strong></label>
+                            <span>${task.title}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><strong>Mô tả:</strong></label>
+                            <span>${task.description}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><strong>Người thực hiện:</strong></label>
+                            <span>${task.assignedTo}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><strong>Trạng thái:</strong></label>
+                            <span class="status ${task.status}">${statusText}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><strong>Độ ưu tiên:</strong></label>
+                            <span>${task.priority || 'Không xác định'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><strong>Deadline:</strong></label>
+                            <span>${task.deadline}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-detail-section">
+                    <h3>Thời gian thực hiện</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item">
+                            <label><strong>Thời gian bắt đầu:</strong></label>
+                            <span>${startDate}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><strong>Thời gian kết thúc:</strong></label>
+                            <span>${endDate}</span>
+                        </div>
+                        <div class="detail-item">
+                            <label><strong>Thời gian làm việc:</strong></label>
+                            <span>${workTime}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="task-detail-section">
+                    <h3>File đính kèm</h3>
+                    ${filesInfo}
+                </div>
+                
+                ${task.extensionRequests && task.extensionRequests.length > 0 ? `
+                    <div class="task-detail-section">
+                        <h3>Yêu cầu gia hạn</h3>
+                        <ul style="margin-left: 20px;">
+                            ${task.extensionRequests.map(req => `
+                                <li>${req.reason} - ${req.requestedDate}</li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa task</button>
+                    ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>` : ''}
+                    <button class="btn" onclick="closeModal('viewTaskModal')">Đóng</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('viewTaskModal').style.display = 'block';
 }
 
 function joinGroup(event) {
@@ -1127,33 +1588,78 @@ function requestExtension(taskId) {
 function showEditTaskModal(taskId) {
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
+    const group = groups.find(g => g.id === task.groupId);
+    const isLeader = currentUser.name === group.leader;
+    const isAssignedMember = task.assignedTo === currentUser.name;
+    
+    // Kiểm tra quyền chỉnh sửa
+    const canEdit = isLeader || isAssignedMember;
+    
     const modalHTML = `
         <div id="editTaskModal" class="modal">
-            <div class="modal-content">
+            <div class="modal-content" style="max-width: 700px;">
                 <span class="close" onclick="closeModal('editTaskModal')">&times;</span>
                 <h2>Chỉnh sửa Task</h2>
                 <form onsubmit="editTask(event, ${taskId})">
                     <div class="form-group">
-                        <label>Tiêu đề task</label>
-                        <input type="text" id="editTaskTitle" value="${task.title}" required>
+                        <label>Tiêu đề task <span style="color: red;">*</span></label>
+                        <input type="text" id="editTaskTitle" value="${task.title}" required ${!canEdit ? 'readonly' : ''}>
                     </div>
                     <div class="form-group">
                         <label>Mô tả</label>
-                        <textarea id="editTaskDescription" required>${task.description}</textarea>
+                        <textarea id="editTaskDescription" rows="4" style="width:100%" ${!canEdit ? 'readonly' : ''}>${task.description}</textarea>
                     </div>
                     <div class="form-group">
                         <label>Người thực hiện</label>
-                        <select id="editTaskAssignee" required>
-                            <option value="Nguyễn Văn A" ${task.assignedTo === 'Nguyễn Văn A' ? 'selected' : ''}>Nguyễn Văn A</option>
-                            <option value="Trần Thị B" ${task.assignedTo === 'Trần Thị B' ? 'selected' : ''}>Trần Thị B</option>
-                            <option value="Lê Văn C" ${task.assignedTo === 'Lê Văn C' ? 'selected' : ''}>Lê Văn C</option>
+                        <select id="editTaskAssignee" ${!canEdit ? 'disabled' : ''}>
+                            <option value="${task.assignedTo}">${task.assignedTo}</option>
+                            ${isLeader ? `
+                                <option value="Nguyễn Văn A">Nguyễn Văn A</option>
+                                <option value="Trần Thị B">Trần Thị B</option>
+                                <option value="Lê Văn C">Lê Văn C</option>
+                            ` : ''}
                         </select>
                     </div>
-                    <div class="form-group">
-                        <label>Deadline</label>
-                        <input type="date" id="editTaskDeadline" value="${task.deadline}" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Trạng thái <span style="color: red;">*</span></label>
+                            <select id="editTaskStatus" required ${!canEdit ? 'disabled' : ''}>
+                                <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Chờ thực hiện</option>
+                                <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>Đang thực hiện</option>
+                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Hoàn thành</option>
+                                <option value="overdue" ${task.status === 'overdue' ? 'selected' : ''}>Quá hạn</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Độ ưu tiên</label>
+                            <select id="editTaskPriority" ${!canEdit ? 'disabled' : ''}>
+                                <option value="low" ${task.priority === 'low' ? 'selected' : ''}>Thấp</option>
+                                <option value="medium" ${task.priority === 'medium' ? 'selected' : ''}>Trung bình</option>
+                                <option value="high" ${task.priority === 'high' ? 'selected' : ''}>Cao</option>
+                            </select>
+                        </div>
                     </div>
-                    <button type="submit" class="btn">Lưu thay đổi</button>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Thời gian bắt đầu</label>
+                            <input type="date" id="editTaskStartTime" value="${formatDateForInput(task.startTime)}" ${!canEdit ? 'readonly' : ''}>
+                        </div>
+                        <div class="form-group">
+                            <label>Thời gian kết thúc</label>
+                            <input type="date" id="editTaskCompletedTime" value="${formatDateForInput(task.completedTime)}" ${!canEdit ? 'readonly' : ''}>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Deadline <span style="color: red;">*</span></label>
+                        <input type="date" id="editTaskDeadline" value="${formatDateForInput(task.deadline)}" required ${!canEdit ? 'readonly' : ''}>
+                    </div>
+                    ${canEdit ? `
+                        <button type="submit" class="btn">Lưu thay đổi</button>
+                    ` : `
+                        <div style="text-align: center; color: #666; font-style: italic; margin-top: 20px;">
+                            Bạn không có quyền chỉnh sửa task này
+                        </div>
+                    `}
                 </form>
             </div>
         </div>
@@ -1162,14 +1668,66 @@ function showEditTaskModal(taskId) {
     document.getElementById('editTaskModal').style.display = 'block';
 }
 
+// Hàm format lại ngày cho input type date
+function formatDateForInput(dateStr) {
+    // Hỗ trợ cả yyyy-mm-dd và mm/dd/yyyy
+    if (!dateStr) return '';
+    if (dateStr.includes('-')) return dateStr;
+    const [mm, dd, yyyy] = dateStr.split('/');
+    return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+}
+
 function editTask(event, taskId) {
     event.preventDefault();
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
-    task.title = document.getElementById('editTaskTitle').value;
-    task.description = document.getElementById('editTaskDescription').value;
-    task.assignedTo = document.getElementById('editTaskAssignee').value;
-    task.deadline = document.getElementById('editTaskDeadline').value;
+    
+    const group = groups.find(g => g.id === task.groupId);
+    const isLeader = currentUser.name === group.leader;
+    const isAssignedMember = task.assignedTo === currentUser.name;
+    
+    // Kiểm tra quyền chỉnh sửa
+    if (!isLeader && !isAssignedMember) {
+        alert('Bạn không có quyền chỉnh sửa task này!');
+        return;
+    }
+    
+    // Lấy giá trị từ form
+    const newTitle = document.getElementById('editTaskTitle').value;
+    const newDescription = document.getElementById('editTaskDescription').value;
+    const newAssignee = document.getElementById('editTaskAssignee').value;
+    const newStatus = document.getElementById('editTaskStatus').value;
+    const newPriority = document.getElementById('editTaskPriority').value;
+    const newStartTime = document.getElementById('editTaskStartTime').value;
+    const newCompletedTime = document.getElementById('editTaskCompletedTime').value;
+    const newDeadline = document.getElementById('editTaskDeadline').value;
+    
+    // Cập nhật task
+    task.title = newTitle;
+    task.description = newDescription;
+    task.assignedTo = newAssignee;
+    task.status = newStatus;
+    task.priority = newPriority;
+    task.startTime = newStartTime || task.startTime;
+    task.deadline = newDeadline;
+    
+    // Xử lý thời gian kết thúc
+    if (newCompletedTime) {
+        task.completedTime = newCompletedTime;
+        if (newStatus === 'completed' && !task.completedTime) {
+            task.completedTime = new Date().toISOString().split('T')[0];
+        }
+    } else if (newStatus === 'completed' && !task.completedTime) {
+        task.completedTime = new Date().toISOString().split('T')[0];
+    } else if (newStatus !== 'completed') {
+        task.completedTime = null;
+    }
+    
+    // Cập nhật thống kê nhóm nếu cần
+    if (group) {
+        group.completedTasks = tasks.filter(t => t.groupId === group.id && t.status === 'completed').length;
+    }
+    
     closeModal('editTaskModal');
     showDashboard();
     alert('Đã cập nhật task thành công!');
@@ -1178,6 +1736,7 @@ function editTask(event, taskId) {
 function showCreateTaskModalForGroup(groupId) {
     const group = groups.find(g => g.id === groupId);
     if (!group) return;
+    const isMember = currentUser.role === 'member';
     const modalHTML = `
         <div id="createTaskModal" class="modal">
             <div class="modal-content">
@@ -1185,25 +1744,34 @@ function showCreateTaskModalForGroup(groupId) {
                 <h2>Tạo task mới cho nhóm: ${group.name}</h2>
                 <form onsubmit="createTaskForGroup(event, ${groupId})">
                     <div class="form-group">
-                        <label>Tiêu đề task</label>
+                        <label>Tiêu đề task <span style="color: red;">*</span></label>
                         <input type="text" id="taskTitle" required>
                     </div>
                     <div class="form-group">
-                        <label>Mô tả</label>
+                        <label>Mô tả <span style="color: red;">*</span></label>
                         <textarea id="taskDescription" required></textarea>
                     </div>
                     <div class="form-group">
                         <label>Người thực hiện</label>
+                        ${isMember ? `<input type='text' id='taskAssignee' value='${currentUser.name}' readonly>` : `
                         <select id="taskAssignee" required>
                             <option value="">Chọn người thực hiện</option>
                             <option value="Nguyễn Văn A">Nguyễn Văn A</option>
                             <option value="Trần Thị B">Trần Thị B</option>
                             <option value="Lê Văn C">Lê Văn C</option>
-                        </select>
+                        </select>`}
                     </div>
                     <div class="form-group">
-                        <label>Deadline</label>
+                        <label>Deadline <span style="color: red;">*</span></label>
                         <input type="date" id="taskDeadline" required>
+                    </div>
+                    <div class="form-group">
+                        <label>File đính kèm</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="file" id="taskFiles" multiple style="flex: 1;" onchange="handleFileSelection()">
+                            <button type="button" class="btn" onclick="document.getElementById('taskFiles').click()">Add File</button>
+                        </div>
+                        <div id="selectedFilesList" style="margin-top: 8px; font-size: 12px; color: #666;"></div>
                     </div>
                     <button type="submit" class="btn">Tạo task</button>
                 </form>
@@ -1218,8 +1786,22 @@ function createTaskForGroup(event, groupId) {
     event.preventDefault();
     const title = document.getElementById('taskTitle').value;
     const description = document.getElementById('taskDescription').value;
-    const assignedTo = document.getElementById('taskAssignee').value;
+    let assignedTo;
+    if (currentUser.role === 'member') {
+        assignedTo = currentUser.name;
+    } else {
+        assignedTo = document.getElementById('taskAssignee').value;
+    }
     const deadline = document.getElementById('taskDeadline').value;
+    
+    // Lấy danh sách file đã chọn
+    const fileInput = document.getElementById('taskFiles');
+    const selectedFiles = Array.from(fileInput.files).map(file => ({
+        name: file.name,
+        size: file.size,
+        type: file.type
+    }));
+    
     const newTask = {
         id: tasks.length + 1,
         title,
@@ -1228,7 +1810,8 @@ function createTaskForGroup(event, groupId) {
         assignedTo,
         status: 'pending',
         deadline,
-        startTime: new Date().toISOString().split('T')[0]
+        startTime: new Date().toISOString().split('T')[0],
+        attachedFiles: selectedFiles
     };
     tasks.push(newTask);
     selectedGroupId = groupId;
@@ -1239,6 +1822,9 @@ function createTaskForGroup(event, groupId) {
 
 function renderTasksForGroup(groupId) {
     const groupTasks = tasks.filter(task => task.groupId === groupId);
+    const group = groups.find(g => g.id === groupId);
+    const isLeader = currentUser.name === group.leader;
+    
     if (groupTasks.length === 0) {
         return '<p>Chưa có task nào.</p>';
     }
@@ -1255,20 +1841,30 @@ function renderTasksForGroup(groupId) {
                 </tr>
             </thead>
             <tbody>
-                ${groupTasks.map(task => `
-                    <tr>
-                        <td>${task.title}</td>
-                        <td>${task.description}</td>
-                        <td>${task.assignedTo}</td>
-                        <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
-                        <td>${task.deadline}</td>
-                        <td>
-                            <button class="btn btn-secondary" onclick="viewTask(${task.id})">Xem</button>
-                            <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>
-                            <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
-                        </td>
-                    </tr>
-                `).join('')}
+                ${groupTasks.map(task => {
+                    const filesInfo = task.attachedFiles && task.attachedFiles.length > 0 ? 
+                        `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+                            📎 ${task.attachedFiles.length} file đính kèm
+                        </div>` : '';
+                    
+                    const isAssignedMember = task.assignedTo === currentUser.name;
+                    const canEdit = isLeader || isAssignedMember;
+                    
+                    return `
+                        <tr>
+                            <td>${task.title}</td>
+                            <td>${task.description}${filesInfo}</td>
+                            <td>${task.assignedTo}</td>
+                            <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
+                            <td>${task.deadline}</td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="viewTask(${task.id})">Xem</button>
+                                ${canEdit ? `<button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>` : ''}
+                                ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
             </tbody>
         </table>
     `;
@@ -1284,7 +1880,7 @@ function showAddMemberModal(groupId) {
                 <h2>Thêm thành viên vào nhóm: ${group.name}</h2>
                 <form onsubmit="addMemberToGroup(event, ${groupId})">
                     <div class="form-group">
-                        <label>Tên thành viên</label>
+                        <label>Tên thành viên <span style="color: red;">*</span></label>
                         <input type="text" id="newMemberName" required placeholder="Nhập tên thành viên">
                     </div>
                     <button type="submit" class="btn">Thêm thành viên</button>
@@ -1333,10 +1929,12 @@ function switchGroup() {
 
 function renderMyTasksForGroup(groupId) {
     const myTasks = tasks.filter(task => task.assignedTo === currentUser.name && task.groupId === groupId);
+    let addBtn = `<button class="btn btn-primary" style="margin-bottom:10px" onclick="showCreateTaskModalForGroup(${groupId})">+ Thêm subtask</button>`;
     if (myTasks.length === 0) {
-        return '<p>Bạn chưa có task nào trong nhóm này.</p>';
+        return addBtn + '<p>Bạn chưa có task nào trong nhóm này.</p>';
     }
     return `
+        ${addBtn}
         <table class="table">
             <thead>
                 <tr>
@@ -1348,20 +1946,41 @@ function renderMyTasksForGroup(groupId) {
                 </tr>
             </thead>
             <tbody>
-                ${myTasks.map(task => `
-                    <tr>
-                        <td>${task.title}</td>
-                        <td>${task.description}</td>
-                        <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
-                        <td>${task.deadline}</td>
-                        <td>
-                            <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
-                        </td>
-                    </tr>
-                `).join('')}
+                ${myTasks.map(task => {
+                    const filesInfo = task.attachedFiles && task.attachedFiles.length > 0 ? 
+                        `<div style="font-size: 11px; color: #666; margin-top: 4px;">
+                            📎 ${task.attachedFiles.length} file đính kèm
+                        </div>` : '';
+                    
+                    return `
+                        <tr>
+                            <td>${task.title}</td>
+                            <td>${task.description}${filesInfo}</td>
+                            <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
+                            <td>${task.deadline}</td>
+                            <td style="display:flex;gap:4px;flex-wrap:wrap;">
+                                <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
+                                <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>
+                                <button class="btn btn-danger" onclick="deleteTask(${task.id})">Xóa</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('')}
             </tbody>
         </table>
     `;
+}
+
+// Thêm hàm xóa task
+function deleteTask(taskId) {
+    if (confirm('Bạn có chắc muốn xóa task này?')) {
+        const idx = tasks.findIndex(t => t.id === taskId);
+        if (idx !== -1) {
+            tasks.splice(idx, 1);
+            showDashboard();
+            alert('Đã xóa task!');
+        }
+    }
 }
 
 // Initialize when page loads
@@ -1409,6 +2028,8 @@ function addInvitedEmail(event) {
         invitedEmails.push(email);
         renderInvitedEmailList();
         document.getElementById('inviteEmail').value = '';
+        alert('Mời thành viên thành công!');
+        // Không gọi checkInvitedGroups ở đây, không hiện modal nào cho leader
     }
 }
 
@@ -1434,6 +2055,8 @@ function checkInvitedGroups() {
     const invitedGroups = groups.filter(g => g.invited && g.invited.includes(currentUser.email));
     if (invitedGroups.length > 0) {
         invitedGroups.forEach(g => {
+            // Nếu đã từ chối lời mời vào group này thì bỏ qua
+            if (localStorage.getItem(`declined_invite_${g.id}_${currentUser.email}`) === 'yes') return;
             // Hiện modal join group
             const modalId = `joinInvitedGroupModal_${g.id}`;
             if (document.getElementById(modalId)) return;
@@ -1444,7 +2067,7 @@ function checkInvitedGroups() {
                         <h2>Bạn được mời vào nhóm: ${g.name}</h2>
                         <p>Chủ đề: <b>${g.topic}</b></p>
                         <button class="btn" onclick="acceptInviteToGroup(${g.id}, '${currentUser.email}', '${modalId}')">Tham gia nhóm</button>
-                        <button class="btn" onclick="closeModal('${modalId}')">Từ chối</button>
+                        <button class="btn" onclick="declineInviteToGroup(${g.id}, '${currentUser.email}', '${modalId}')">Từ chối</button>
                     </div>
                 </div>
             `;
@@ -1467,6 +2090,12 @@ function acceptInviteToGroup(groupId, email, modalId) {
         showDashboard();
         alert('Bạn đã tham gia nhóm thành công!');
     }
+}
+
+function declineInviteToGroup(groupId, email, modalId) {
+    localStorage.setItem(`declined_invite_${groupId}_${email}`, 'yes');
+    closeModal(modalId);
+    alert('Bạn đã từ chối lời mời vào nhóm này.');
 }
 
 // Thêm hàm xóa thành viên khỏi nhóm
@@ -1710,4 +2339,38 @@ function leaveGroupAsMember(groupId) {
     closeModal('leaveGroupModal');
     showDashboard();
     alert('Đã rời khỏi nhóm thành công!');
+} 
+
+function showInviteNotificationsModal() {
+    // Lấy các nhóm đã mời user
+    const invitedGroups = groups.filter(g => g.invited && g.invited.includes(currentUser.email));
+    let modalHTML = `
+        <div id="inviteNotificationsModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeModal('inviteNotificationsModal')">&times;</span>
+                <h2>Thông báo lời mời vào nhóm</h2>
+                <div>
+    `;
+    if (invitedGroups.length === 0) {
+        modalHTML += `<p>Bạn chưa có lời mời nào.</p>`;
+    } else {
+        modalHTML += `
+            <ul style="list-style:none;padding:0;">
+                ${invitedGroups.map(g => `
+                    <li style="margin-bottom:16px;padding:12px;border:1px solid #eee;border-radius:8px;">
+                        <b>${g.name}</b> - <i>${g.topic}</i><br/>
+                        <button class='btn btn-success' style='margin-right:8px' onclick="acceptInviteToGroup(${g.id}, '${currentUser.email}', 'inviteNotificationsModal')">Đồng ý</button>
+                        <button class='btn btn-danger' onclick="declineInviteToGroup(${g.id}, '${currentUser.email}', 'inviteNotificationsModal')">Không đồng ý</button>
+                    </li>
+                `).join('')}
+            </ul>
+        `;
+    }
+    modalHTML += `
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('inviteNotificationsModal').style.display = 'block';
 } 
