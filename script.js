@@ -436,19 +436,19 @@ function renderProjects() {
 
 function renderGroups() {
     if (groups.length === 0) {
-        return '<p>Chưa có nhóm nào.</p>';
+        return '<p>No groups yet.</p>';
     }
 
     return `
         <table class="table">
             <thead>
                 <tr>
-                    <th>Tên nhóm</th>
-                    <th>Đề tài</th>
+                    <th>Group Name</th>
+                    <th>Topic</th>
                     <th>Leader</th>
-                    <th>Thành viên</th>
-                    <th>Tiến độ</th>
-                    <th>Hành động</th>
+                    <th>Members</th>
+                    <th>Progress</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -465,8 +465,8 @@ function renderGroups() {
                             <td>${group.members.join(', ')}</td>
                             <td>${completedTasks}/${group.totalTasks}</td>
                             <td>
-                                <button class="btn btn-secondary" onclick="viewGroup(${group.id})">Xem</button>
-                                ${isCurrentUserInGroup ? `<button class="btn btn-danger" onclick="showLeaveGroupModal(${group.id})">Rời nhóm</button>` : ''}
+                                <button class="btn btn-secondary" onclick="viewGroup(${group.id})">View</button>
+                                ${isCurrentUserInGroup ? `<button class="btn btn-danger" onclick="showLeaveGroupModal(${group.id})">Leave Group</button>` : ''}
                             </td>
                         </tr>
                     `;
@@ -481,14 +481,14 @@ function renderMemberRequests() {
     const myGroups = groups.filter(g => g.leader === currentUser.name);
     const myGroupIds = myGroups.map(g => g.id);
     const requests = window.memberRequests.filter(r => myGroupIds.includes(r.groupId) && r.status === 'pending');
-    if (requests.length === 0) return '<p>Không có yêu cầu tham gia nhóm nào.</p>';
+    if (requests.length === 0) return '<p>No group join requests.</p>';
     return `
         <table class="table">
             <thead>
                 <tr>
-                    <th>Thành viên</th>
-                    <th>Nhóm</th>
-                    <th>Hành động</th>
+                    <th>Member</th>
+                    <th>Group</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -499,8 +499,8 @@ function renderMemberRequests() {
                             <td>${r.studentName}</td>
                             <td>${group ? group.name : ''}</td>
                             <td>
-                                <button class="btn btn-success" onclick="approveMemberRequest(${r.id})">Chấp nhận</button>
-                                <button class="btn btn-danger" onclick="rejectMemberRequest(${r.id})">Từ chối</button>
+                                <button class="btn btn-success" onclick="approveMemberRequest(${r.id})">Approve</button>
+                                <button class="btn btn-danger" onclick="rejectMemberRequest(${r.id})">Reject</button>
                             </td>
                         </tr>
                     `;
@@ -512,7 +512,7 @@ function renderMemberRequests() {
 
 function renderTasks() {
     if (tasks.length === 0) {
-        return '<p>Chưa có task nào.</p>';
+        return '<p>No tasks yet.</p>';
     }
 
     return `
@@ -520,18 +520,18 @@ function renderTasks() {
             <thead>
                 <tr>
                     <th>Task</th>
-                    <th>Mô tả</th>
-                    <th>Người thực hiện</th>
-                    <th>Trạng thái</th>
+                    <th>Description</th>
+                    <th>Assigned To</th>
+                    <th>Status</th>
                     <th>Deadline</th>
-                    <th>Hành động</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 ${tasks.map(task => {
                     const filesInfo = task.attachedFiles && task.attachedFiles.length > 0 ? 
                         `<div style="font-size: 11px; color: #666; margin-top: 4px;">
-                            📎 ${task.attachedFiles.length} file đính kèm
+                            📎 ${task.attachedFiles.length} attached files
                         </div>` : '';
                     
                     return `
