@@ -1,9 +1,9 @@
 // Demo accounts for testing
 const demoAccounts = {
     students: [
-        { email: "leader@student.com", password: "123456", role: "leader", name: "John Smith" },
-        { email: "member@student.com", password: "123456", role: "member", name: "Sarah Johnson" },
-        { email: "member2@student.com", password: "123456", role: "member", name: "Mike Davis" }
+        { email: "leader@student.com", password: "123456", role: "leader", name: "Lê Tấn Nguyện" },
+        { email: "member@student.com", password: "123456", role: "member", name: "Ngô Khải Luân" },
+        { email: "member2@student.com", password: "123456", role: "member", name: "Phạm Lê Duy Bảo" }
     ],
     lecturers: [
         { email: "lecturer@teacher.com", password: "123456", name: "Dr. Robert Wilson" }
@@ -42,8 +42,8 @@ function initializeDemoData() {
             name: "Group 1 - Web Project",
             projectId: 1,
             topic: "User Interface Design",
-            leader: "John Smith",
-            members: ["Sarah Johnson", "Mike Davis"],
+            leader: "Lê Tấn Nguyện",
+            members: ["Ngô Khải Luân", "Phạm Lê Duy Bảo"],
             createdBy: "lecturer@teacher.com",
             status: "active",
             completedTasks: 0,
@@ -58,7 +58,7 @@ function initializeDemoData() {
             title: "Design Interface",
             description: "Create mockup for homepage",
             groupId: 1,
-            assignedTo: "Sarah Johnson",
+            assignedTo: "Ngô Khải Luân",
             status: "in-progress",
             deadline: "2024-02-15",
             priority: "high",
@@ -71,7 +71,7 @@ function initializeDemoData() {
             title: "Develop Backend",
             description: "Build API for the system",
             groupId: 1,
-            assignedTo: "Mike Davis",
+            assignedTo: "Phạm Lê Duy Bảo",
             status: "pending",
             deadline: "2024-02-20",
             priority: "medium",
@@ -86,8 +86,8 @@ function initializeDemoData() {
         {
             id: 1,
             groupId: 1,
-            evaluator: "Sarah Johnson",
-            evaluated: "Mike Davis",
+            evaluator: "Ngô Khải Luân",
+            evaluated: "Phạm Lê Duy Bảo",
             score: 8,
             comment: "Works very actively",
             criteria: {
@@ -541,11 +541,11 @@ function renderTasks() {
                             <td>${task.assignedTo}</td>
                             <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
                             <td>${task.deadline}</td>
-                            <td>
-                                <button class="btn btn-secondary" onclick="viewTask(${task.id})">Xem</button>
-                                <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>
-                                <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
-                            </td>
+                                                <td>
+                        <button class="btn btn-secondary" onclick="viewTask(${task.id})">View</button>
+                        <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Edit</button>
+                        <button class="btn btn-success" onclick="completeTask(${task.id})">Complete</button>
+                    </td>
                         </tr>
                     `;
                 }).join('')}
@@ -590,10 +590,10 @@ function renderMyTasks() {
                             <td>${task.description}${filesInfo}</td>
                             <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
                             <td>${task.deadline}</td>
-                            <td>${workTime} ngày</td>
+                            <td>${workTime} days</td>
                             <td>
-                                <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
-                                <button class="btn btn-warning" onclick="requestExtension(${task.id})">Gia hạn</button>
+                                <button class="btn btn-success" onclick="completeTask(${task.id})">Complete</button>
+                                <button class="btn btn-warning" onclick="requestExtension(${task.id})">Extend</button>
                             </td>
                         </tr>
                     `;
@@ -606,12 +606,12 @@ function renderMyTasks() {
 // Utility functions
 function getStatusText(status) {
     const statusMap = {
-        'pending': 'Chờ thực hiện',
-        'in-progress': 'Đang thực hiện',
-        'completed': 'Hoàn thành',
-        'overdue': 'Quá hạn',
-        'active': 'Hoạt động',
-        'inactive': 'Không hoạt động'
+        'pending': 'Pending',
+        'in-progress': 'In Progress',
+        'completed': 'Completed',
+        'overdue': 'Overdue',
+        'active': 'Active',
+        'inactive': 'Inactive'
     };
     return statusMap[status] || status;
 }
@@ -650,7 +650,7 @@ function generateMemberEvaluation(groupId) {
                     evaluator: evaluator,
                     evaluated: evaluated,
                     score: Math.floor(Math.random() * 3) + 7, // Random score 7-9
-                    comment: "Đánh giá tự động từ AI",
+                    comment: "Automatic evaluation from AI",
                     criteria: {
                         teamwork: Math.floor(Math.random() * 3) + 7,
                         responsibility: Math.floor(Math.random() * 3) + 7,
@@ -671,14 +671,14 @@ function showCreateProjectModal() {
         <div id="createProjectModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('createProjectModal')">&times;</span>
-                <h2>Tạo dự án mới</h2>
+                <h2>Create New Project</h2>
                 <form onsubmit="createProject(event)">
                     <div class="form-group">
-                        <label>Tên dự án <span style="color: red;">*</span></label>
+                        <label>Project Name <span style="color: red;">*</span></label>
                         <input type="text" id="projectName" required>
                     </div>
                     <div class="form-group">
-                        <label>Mô tả <span style="color: red;">*</span></label>
+                        <label>Description <span style="color: red;">*</span></label>
                         <textarea id="projectDescription" required></textarea>
                     </div>
                     <div class="form-row">
@@ -687,11 +687,11 @@ function showCreateProjectModal() {
                             <input type="date" id="projectDeadline" required>
                         </div>
                         <div class="form-group">
-                            <label>Số nhóm tối đa <span style="color: red;">*</span></label>
+                            <label>Maximum Groups <span style="color: red;">*</span></label>
                             <input type="number" id="maxGroups" min="1" max="10" value="5" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn">Tạo dự án</button>
+                    <button type="submit" class="btn">Create Project</button>
                 </form>
             </div>
         </div>
@@ -706,7 +706,7 @@ function showCreateGroupModal() {
         <div id="createGroupModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('createGroupModal')">&times;</span>
-                <h2>Tạo nhóm mới</h2>
+                <h2>Create New Group</h2>
                 <form onsubmit="createGroup(event)">
                     ${currentUser.type === 'lecturer' ? `
                         <div class="form-group">
@@ -718,11 +718,11 @@ function showCreateGroupModal() {
                         </div>
                     ` : ''}
                     <div class="form-group">
-                        <label>Tên nhóm <span style="color: red;">*</span></label>
+                        <label>Group Name <span style="color: red;">*</span></label>
                         <input type="text" id="groupName" required>
                     </div>
                     <div class="form-group">
-                        <label>Tên đề tài <span style="color: red;">*</span></label>
+                        <label>Topic Name <span style="color: red;">*</span></label>
                         <input type="text" id="groupTopic" required>
                     </div>
                     ${currentUser.type === 'lecturer' ? `
@@ -737,18 +737,18 @@ function showCreateGroupModal() {
                         </div>
                     ` : `
                         <div class="form-group">
-                            <label>Tên trưởng nhóm</label>
+                            <label>Group Leader Name</label>
                             <input type="text" id="groupLeader" value="${currentUser.name}" readonly>
                         </div>
                     `}
                     <div class="form-group">
-                        <label>Thành viên</label>
+                        <label>Members</label>
                         <div style="display: flex; gap: 8px; align-items: center;">
-                            <input type="text" id="groupMembers" placeholder="Tên thành viên, phân cách bằng dấu phẩy" style="flex: 1;">
+                            <input type="text" id="groupMembers" placeholder="Member names, separated by commas" style="flex: 1;">
                             <button type="button" class="btn" id="inviteMemberBtn" onclick="inviteMember()">Invite</button>
                         </div>
                     </div>
-                    <button type="submit" class="btn">Tạo nhóm</button>
+                    <button type="submit" class="btn">Create Group</button>
                 </form>
             </div>
         </div>
@@ -763,21 +763,21 @@ function showCreateTaskModal() {
         <div id="createTaskModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('createTaskModal')">&times;</span>
-                <h2>Tạo task mới</h2>
+                <h2>Create New Task</h2>
                 <form onsubmit="createTask(event)">
                     <div class="form-group">
-                        <label>Tiêu đề task <span style="color: red;">*</span></label>
+                        <label>Task Title <span style="color: red;">*</span></label>
                         <input type="text" id="taskTitle" required>
                     </div>
                     <div class="form-group">
-                        <label>Mô tả <span style="color: red;">*</span></label>
+                        <label>Description <span style="color: red;">*</span></label>
                         <textarea id="taskDescription" required></textarea>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Người thực hiện <span style="color: red;">*</span></label>
+                            <label>Assigned To <span style="color: red;">*</span></label>
                             <select id="taskAssignee" required>
-                                <option value="">Chọn người thực hiện</option>
+                                <option value="">Select assignee</option>
                                 <option value="Nguyễn Văn A">Nguyễn Văn A</option>
                                 <option value="Trần Thị B">Trần Thị B</option>
                                 <option value="Lê Văn C">Lê Văn C</option>
@@ -798,7 +798,7 @@ function showCreateTaskModal() {
                             <input type="date" id="taskDeadline" required>
                         </div>
                         <div class="form-group">
-                            <label>Cho phép chỉnh sửa deadline</label>
+                            <label>Allow deadline editing</label>
                             <input type="checkbox" id="allowDeadlineEdit" checked>
                         </div>
                     </div>
@@ -831,25 +831,25 @@ function showJoinGroupModal() {
         <div id="joinGroupModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('joinGroupModal')">&times;</span>
-                <h2>Gửi yêu cầu tham gia nhóm</h2>
+                <h2>Send Group Join Request</h2>
                 <form onsubmit="joinGroup(event)">
                     <div class="form-group">
-                        <label>Chọn trưởng nhóm</label>
+                        <label>Select Group Leader</label>
                         <select id="leaderFilter" onchange="filterGroupsByLeader()">
-                            <option value="">Tất cả</option>
+                            <option value="">All</option>
                             ${leaders.map(leader => `<option value="${leader}">${leader}</option>`).join('')}
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>Chọn nhóm <span style="color: red;">*</span></label>
+                        <label>Select Group <span style="color: red;">*</span></label>
                         <select id="selectedGroup" required>
-                            <option value="">Chọn nhóm muốn tham gia</option>
+                            <option value="">Select group to join</option>
                             ${availableGroups.map(group => `
-                                <option value="${group.id}" data-leader="${group.leader}">${group.name} - ${group.topic} (${group.members.length}/4 thành viên)</option>
+                                <option value="${group.id}" data-leader="${group.leader}">${group.name} - ${group.topic} (${group.members.length}/4 members)</option>
                             `).join('')}
                         </select>
                     </div>
-                    <button type="submit" class="btn">Gửi yêu cầu</button>
+                    <button type="submit" class="btn">Send Request</button>
                 </form>
             </div>
         </div>
@@ -886,21 +886,21 @@ function showFinalEvaluation() {
         <div id="finalEvaluationModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('finalEvaluationModal')">&times;</span>
-                <h2>Đánh giá cuối kỳ - ${myGroup.name}</h2>
+                <h2>Final Evaluation - ${myGroup.name}</h2>
                 
                 <div class="section">
-                    <h3>Bảng đánh giá thành viên</h3>
+                    <h3>Member Evaluation Board</h3>
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>Người đánh giá</th>
-                                <th>Người được đánh giá</th>
-                                <th>Điểm tổng</th>
+                                <th>Evaluator</th>
+                                <th>Person Evaluated</th>
+                                <th>Total Score</th>
                                 <th>Teamwork</th>
                                 <th>Responsibility</th>
                                 <th>Quality</th>
                                 <th>Punctuality</th>
-                                <th>Nhận xét</th>
+                                <th>Comments</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -921,16 +921,16 @@ function showFinalEvaluation() {
                 </div>
                 
                 <div class="section">
-                    <h3>Thống kê thời gian làm việc</h3>
+                    <h3>Work Time Statistics</h3>
                     ${generateWorkTimeStatistics(myGroup.id)}
                 </div>
                 
                 <div class="section">
-                    <h3>Báo cáo hoàn thành task</h3>
+                    <h3>Task Completion Report</h3>
                     ${generateTaskCompletionReport(myGroup.id)}
                 </div>
                 
-                <button class="btn" onclick="closeModal('finalEvaluationModal')">Đóng</button>
+                <button class="btn" onclick="closeModal('finalEvaluationModal')">Close</button>
             </div>
         </div>
     `;
@@ -960,10 +960,10 @@ function generateWorkTimeStatistics(groupId) {
         <table class="table">
             <thead>
                 <tr>
-                    <th>Thành viên</th>
-                    <th>Số task</th>
-                    <th>Tổng thời gian (ngày)</th>
-                    <th>Thời gian trung bình/task</th>
+                    <th>Member</th>
+                    <th>Task Count</th>
+                    <th>Total Time (days)</th>
+                    <th>Average Time/Task</th>
                 </tr>
             </thead>
             <tbody>
@@ -1007,11 +1007,11 @@ function generateTaskCompletionReport(groupId) {
         <table class="table">
             <thead>
                 <tr>
-                    <th>Thành viên</th>
-                    <th>Tổng task</th>
-                    <th>Hoàn thành đúng hạn</th>
-                    <th>Hoàn thành trễ hạn</th>
-                    <th>Tỷ lệ đúng hạn</th>
+                    <th>Member</th>
+                    <th>Total Tasks</th>
+                    <th>Completed On Time</th>
+                    <th>Completed Late</th>
+                    <th>On-Time Rate</th>
                 </tr>
             </thead>
             <tbody>
@@ -1164,41 +1164,41 @@ function showMemberEvaluationModal(groupId) {
         <div id="memberEvaluationModal" class="modal">
             <div class="modal-content" style="max-width: 800px;">
                 <span class="close" onclick="closeModal('memberEvaluationModal')">&times;</span>
-                <h2>Tạo đánh giá thành viên - Nhóm: ${group.name}</h2>
+                <h2>Create Member Evaluation - Group: ${group.name}</h2>
                 <form onsubmit="createMemberEvaluation(event, ${groupId})">
                     <input type="hidden" id="evaluator" value="${currentUser.name}">
                     <div class="form-group">
-                        <label>Người được đánh giá <span style="color: red;">*</span></label>
+                        <label>Person to Evaluate <span style="color: red;">*</span></label>
                         <select id="evaluated" required>
-                            <option value="">Chọn người được đánh giá</option>
+                            <option value="">Select person to evaluate</option>
                             ${evaluatableMembers.map(member => `<option value="${member}">${member}</option>`).join('')}
                         </select>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Làm việc nhóm (1-10) <span style="color: red;">*</span></label>
+                            <label>Teamwork (1-10) <span style="color: red;">*</span></label>
                             <input type="number" id="teamwork" min="1" max="10" required>
                         </div>
                         <div class="form-group">
-                            <label>Trách nhiệm (1-10) <span style="color: red;">*</span></label>
+                            <label>Responsibility (1-10) <span style="color: red;">*</span></label>
                             <input type="number" id="responsibility" min="1" max="10" required>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Chất lượng công việc (1-10) <span style="color: red;">*</span></label>
+                            <label>Work Quality (1-10) <span style="color: red;">*</span></label>
                             <input type="number" id="quality" min="1" max="10" required>
                         </div>
                         <div class="form-group">
-                            <label>Đúng hạn (1-10) <span style="color: red;">*</span></label>
+                            <label>Punctuality (1-10) <span style="color: red;">*</span></label>
                             <input type="number" id="punctuality" min="1" max="10" required>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Nhận xét</label>
-                        <textarea id="comment" rows="3" placeholder="Nhập nhận xét về thành viên..."></textarea>
+                        <label>Comments</label>
+                        <textarea id="comment" rows="3" placeholder="Enter comments about the member..."></textarea>
                     </div>
-                    <button type="submit" class="btn">Tạo đánh giá</button>
+                    <button type="submit" class="btn">Create Evaluation</button>
                 </form>
             </div>
         </div>
@@ -1235,7 +1235,7 @@ function createMemberEvaluation(event, groupId) {
         evaluator: evaluator,
         evaluated: evaluated,
         score: averageScore,
-        comment: comment || 'Không có nhận xét',
+        comment: comment || 'No comments',
         criteria: {
             teamwork: teamwork,
             responsibility: responsibility,
@@ -1251,7 +1251,7 @@ function createMemberEvaluation(event, groupId) {
     
     closeModal('memberEvaluationModal');
     showDashboard();
-    alert('Đã tạo đánh giá thành công!');
+    alert('Evaluation created successfully!');
 }
 
 // Hàm xem đánh giá thành viên
@@ -1262,21 +1262,21 @@ function viewMemberEvaluation(groupId) {
     const isLeader = currentUser.name === group.leader;
     
     if (groupEvaluations.length === 0) {
-        alert('Chưa có đánh giá nào cho nhóm này!');
+        alert('No evaluations for this group yet!');
         return;
     }
     
     // Lọc đánh giá theo quyền
     let filteredEvaluations = groupEvaluations;
-    let modalTitle = `Bảng đánh giá thành viên - Nhóm: ${group.name}`;
+    let modalTitle = `Member Evaluation Board - Group: ${group.name}`;
     
     if (!isLeader) {
         // Member chỉ xem được đánh giá của chính mình
         filteredEvaluations = groupEvaluations.filter(eval => eval.evaluated === currentUser.name);
-        modalTitle = `Đánh giá của tôi - Nhóm: ${group.name}`;
+        modalTitle = `My Evaluation - Group: ${group.name}`;
         
         if (filteredEvaluations.length === 0) {
-            alert('Chưa có đánh giá nào cho bạn!');
+            alert('No evaluations for you yet!');
             return;
         }
     }
@@ -1390,7 +1390,7 @@ function viewTask(taskId) {
     
     const group = groups.find(g => g.id === task.groupId);
     const startDate = task.startTime || 'Chưa bắt đầu';
-    const endDate = task.completedTime || 'Chưa hoàn thành';
+    const endDate = task.completedTime || 'Not completed';
     const statusText = getStatusText(task.status);
     
     // Tính thời gian làm việc
@@ -1400,13 +1400,13 @@ function viewTask(taskId) {
         const end = new Date(task.completedTime);
         const diffTime = Math.abs(end - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        workTime = `${diffDays} ngày`;
+        workTime = `${diffDays} days`;
     } else if (task.startTime) {
         const start = new Date(task.startTime);
         const now = new Date();
         const diffTime = Math.abs(now - start);
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        workTime = `${diffDays} ngày (đang thực hiện)`;
+        workTime = `${diffDays} days (in progress)`;
     }
     
     // Hiển thị file đính kèm
@@ -1481,7 +1481,7 @@ function viewTask(taskId) {
                 
                 ${task.extensionRequests && task.extensionRequests.length > 0 ? `
                     <div class="task-detail-section">
-                        <h3>Yêu cầu gia hạn</h3>
+                        <h3>Extension Request</h3>
                         <ul style="margin-left: 20px;">
                             ${task.extensionRequests.map(req => `
                                 <li>${req.reason} - ${req.requestedDate}</li>
@@ -1491,9 +1491,9 @@ function viewTask(taskId) {
                 ` : ''}
                 
                 <div style="margin-top: 20px; text-align: center;">
-                    <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa task</button>
-                    ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>` : ''}
-                    <button class="btn" onclick="closeModal('viewTaskModal')">Đóng</button>
+                                            <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Edit Task</button>
+                        ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="completeTask(${task.id})">Complete</button>` : ''}
+                    <button class="btn" onclick="closeModal('viewTaskModal')">Close</button>
                 </div>
             </div>
         </div>
@@ -1551,7 +1551,7 @@ function completeTask(taskId) {
             group.completedTasks = tasks.filter(t => t.groupId === group.id && t.status === 'completed').length;
         }
         showDashboard();
-        alert('Task đã được hoàn thành!');
+        alert('Task completed successfully!');
     }
 }
 
@@ -1564,7 +1564,7 @@ function updateAutoDeadline() {
 function requestExtension(taskId) {
     const task = tasks.find(t => t.id === taskId);
     if (task) {
-        const extensionDays = prompt('Nhập số ngày muốn gia hạn (tối đa 7 ngày):', '3');
+        const extensionDays = prompt('Enter number of days to extend (maximum 7 days):', '3');
         const days = parseInt(extensionDays);
         
         if (days && days > 0 && days <= 7) {
@@ -1578,9 +1578,9 @@ function requestExtension(taskId) {
                 requestDate: new Date().toISOString().split('T')[0]
             });
             
-            alert(`Đã gửi yêu cầu gia hạn ${days} ngày!`);
+            alert(`Extension request sent for ${days} days!`);
         } else {
-            alert('Số ngày gia hạn không hợp lệ!');
+            alert('Invalid extension days!');
         }
     }
 }
@@ -1599,7 +1599,7 @@ function showEditTaskModal(taskId) {
         <div id="editTaskModal" class="modal">
             <div class="modal-content" style="max-width: 700px;">
                 <span class="close" onclick="closeModal('editTaskModal')">&times;</span>
-                <h2>Chỉnh sửa Task</h2>
+                <h2>Edit Task</h2>
                 <form onsubmit="editTask(event, ${taskId})">
                     <div class="form-group">
                         <label>Tiêu đề task <span style="color: red;">*</span></label>
@@ -1624,10 +1624,10 @@ function showEditTaskModal(taskId) {
                         <div class="form-group">
                             <label>Trạng thái <span style="color: red;">*</span></label>
                             <select id="editTaskStatus" required ${!canEdit ? 'disabled' : ''}>
-                                <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Chờ thực hiện</option>
-                                <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>Đang thực hiện</option>
-                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Hoàn thành</option>
-                                <option value="overdue" ${task.status === 'overdue' ? 'selected' : ''}>Quá hạn</option>
+                                <option value="pending" ${task.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                <option value="in-progress" ${task.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                <option value="overdue" ${task.status === 'overdue' ? 'selected' : ''}>Overdue</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1657,7 +1657,7 @@ function showEditTaskModal(taskId) {
                         <button type="submit" class="btn">Lưu thay đổi</button>
                     ` : `
                         <div style="text-align: center; color: #666; font-style: italic; margin-top: 20px;">
-                            Bạn không có quyền chỉnh sửa task này
+                            You do not have permission to edit this task
                         </div>
                     `}
                 </form>
@@ -1688,7 +1688,7 @@ function editTask(event, taskId) {
     
     // Kiểm tra quyền chỉnh sửa
     if (!isLeader && !isAssignedMember) {
-        alert('Bạn không có quyền chỉnh sửa task này!');
+        alert('You do not have permission to edit this task!');
         return;
     }
     
@@ -1830,16 +1830,16 @@ function renderTasksForGroup(groupId) {
     }
     return `
         <table class="table">
-            <thead>
-                <tr>
-                    <th>Task</th>
-                    <th>Mô tả</th>
-                    <th>Người thực hiện</th>
-                    <th>Trạng thái</th>
-                    <th>Deadline</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
+                                <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Description</th>
+                            <th>Assigned To</th>
+                            <th>Status</th>
+                            <th>Deadline</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
             <tbody>
                 ${groupTasks.map(task => {
                     const filesInfo = task.attachedFiles && task.attachedFiles.length > 0 ? 
@@ -1858,9 +1858,9 @@ function renderTasksForGroup(groupId) {
                             <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
                             <td>${task.deadline}</td>
                             <td>
-                                <button class="btn btn-secondary" onclick="viewTask(${task.id})">Xem</button>
-                                ${canEdit ? `<button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>` : ''}
-                                ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>` : ''}
+                                                    <button class="btn btn-secondary" onclick="viewTask(${task.id})">View</button>
+                    ${canEdit ? `<button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Edit</button>` : ''}
+                    ${task.status !== 'completed' ? `<button class="btn btn-success" onclick="completeTask(${task.id})">Complete</button>` : ''}
                             </td>
                         </tr>
                     `;
@@ -1877,13 +1877,13 @@ function showAddMemberModal(groupId) {
         <div id="addMemberModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('addMemberModal')">&times;</span>
-                <h2>Thêm thành viên vào nhóm: ${group.name}</h2>
+                <h2>Add Member to Group: ${group.name}</h2>
                 <form onsubmit="addMemberToGroup(event, ${groupId})">
                     <div class="form-group">
-                        <label>Tên thành viên <span style="color: red;">*</span></label>
-                        <input type="text" id="newMemberName" required placeholder="Nhập tên thành viên">
+                        <label>Member Name <span style="color: red;">*</span></label>
+                        <input type="text" id="newMemberName" required placeholder="Enter member name">
                     </div>
-                    <button type="submit" class="btn">Thêm thành viên</button>
+                    <button type="submit" class="btn">Add Member</button>
                 </form>
             </div>
         </div>
@@ -1901,14 +1901,14 @@ function addMemberToGroup(event, groupId) {
         group.members.push(newMember);
         closeModal('addMemberModal');
         showDashboard();
-        alert('Đã thêm thành viên vào nhóm!');
+        alert('Member added to group!');
     } else {
-        alert('Tên thành viên không hợp lệ hoặc đã tồn tại trong nhóm!');
+        alert('Invalid member name or already exists in group!');
     }
 }
 
 function deleteGroup(groupId) {
-    if (confirm('Bạn có chắc chắn muốn xóa nhóm này?')) {
+    if (confirm('Are you sure you want to delete this group?')) {
         const idx = groups.findIndex(g => g.id === groupId);
         if (idx !== -1) {
             groups.splice(idx, 1);
@@ -1917,7 +1917,7 @@ function deleteGroup(groupId) {
                 if (tasks[i].groupId === groupId) tasks.splice(i, 1);
             }
             showDashboard();
-            alert('Đã xóa nhóm thành công!');
+            alert('Group deleted successfully!');
         }
     }
 }
@@ -1929,7 +1929,7 @@ function switchGroup() {
 
 function renderMyTasksForGroup(groupId) {
     const myTasks = tasks.filter(task => task.assignedTo === currentUser.name && task.groupId === groupId);
-    let addBtn = `<button class="btn btn-primary" style="margin-bottom:10px" onclick="showCreateTaskModalForGroup(${groupId})">+ Thêm subtask</button>`;
+    let addBtn = `<button class="btn btn-primary" style="margin-bottom:10px" onclick="showCreateTaskModalForGroup(${groupId})">+ Add Subtask</button>`;
     if (myTasks.length === 0) {
         return addBtn + '<p>Bạn chưa có task nào trong nhóm này.</p>';
     }
@@ -1959,9 +1959,9 @@ function renderMyTasksForGroup(groupId) {
                             <td><span class="status ${task.status}">${getStatusText(task.status)}</span></td>
                             <td>${task.deadline}</td>
                             <td style="display:flex;gap:4px;flex-wrap:wrap;">
-                                <button class="btn btn-success" onclick="completeTask(${task.id})">Hoàn thành</button>
-                                <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Sửa</button>
-                                <button class="btn btn-danger" onclick="deleteTask(${task.id})">Xóa</button>
+                                                        <button class="btn btn-success" onclick="completeTask(${task.id})">Complete</button>
+                        <button class="btn btn-warning" onclick="showEditTaskModal(${task.id})">Edit</button>
+                                <button class="btn btn-danger" onclick="deleteTask(${task.id})">Delete</button>
                             </td>
                         </tr>
                     `;
@@ -1973,12 +1973,12 @@ function renderMyTasksForGroup(groupId) {
 
 // Thêm hàm xóa task
 function deleteTask(taskId) {
-    if (confirm('Bạn có chắc muốn xóa task này?')) {
+    if (confirm('Are you sure you want to delete this task?')) {
         const idx = tasks.findIndex(t => t.id === taskId);
         if (idx !== -1) {
             tasks.splice(idx, 1);
             showDashboard();
-            alert('Đã xóa task!');
+            alert('Task deleted!');
         }
     }
 }
@@ -2003,16 +2003,16 @@ function inviteMember() {
         <div id="inviteModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('inviteModal')">&times;</span>
-                <h2>Mời thành viên vào nhóm</h2>
+                <h2>Invite Member to Group</h2>
                 <form onsubmit="addInvitedEmail(event)">
                     <div class="form-group">
-                        <label>Email thành viên</label>
-                        <input type="email" id="inviteEmail" placeholder="Nhập email thành viên" required>
+                        <label>Member Email</label>
+                        <input type="email" id="inviteEmail" placeholder="Enter member email" required>
                     </div>
-                    <button type="submit" class="btn">Thêm email</button>
+                    <button type="submit" class="btn">Add Email</button>
                 </form>
                 <div id="invitedEmailList" style="margin-top:16px;"></div>
-                <button class="btn" onclick="closeModal('inviteModal')">Đóng</button>
+                <button class="btn" onclick="closeModal('inviteModal')">Close</button>
             </div>
         </div>
     `;
@@ -2028,7 +2028,7 @@ function addInvitedEmail(event) {
         invitedEmails.push(email);
         renderInvitedEmailList();
         document.getElementById('inviteEmail').value = '';
-        alert('Mời thành viên thành công!');
+        alert('Member invited successfully!');
         // Không gọi checkInvitedGroups ở đây, không hiện modal nào cho leader
     }
 }
@@ -2104,7 +2104,7 @@ function removeMemberFromGroup(groupId, memberName) {
     if (group) {
         group.members = group.members.filter(m => m !== memberName);
         showDashboard();
-        alert(`Đã xóa thành viên ${memberName} khỏi nhóm!`);
+        alert(`Member ${memberName} removed from group!`);
     }
 }
 
@@ -2114,9 +2114,9 @@ function showGroupInfoTable(group) {
         <div id="groupInfoModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('groupInfoModal')">&times;</span>
-                <h2><i class="fas fa-check-circle"></i> Tạo nhóm thành công!</h2>
+                <h2><i class="fas fa-check-circle"></i> Group Created Successfully!</h2>
                 <div class="group-info-table">
-                    <h3>Thông tin nhóm đã tạo:</h3>
+                    <h3>Created Group Information:</h3>
                     <table class="info-table">
                         <tr>
                             <th>Thông tin</th>
@@ -2233,7 +2233,7 @@ function showLeaveGroupModal(groupId) {
     const isMember = group.members.includes(currentUser.name);
     
     if (!isLeader && !isMember) {
-        alert('Bạn không phải thành viên của nhóm này!');
+        alert('You are not a member of this group!');
         return;
     }
     
@@ -2244,9 +2244,9 @@ function showLeaveGroupModal(groupId) {
                 <h2><i class="fas fa-sign-out-alt"></i> Rời nhóm</h2>
                 <div class="leave-group-info">
                     <h3>Thông tin nhóm:</h3>
-                    <p><strong>Tên nhóm:</strong> ${group.name}</p>
+                    <p><strong>Group Name:</strong> ${group.name}</p>
                     <p><strong>Chủ đề:</strong> ${group.topic}</p>
-                    <p><strong>Vai trò của bạn:</strong> ${isLeader ? 'Trưởng nhóm' : 'Thành viên'}</p>
+                    <p><strong>Your Role:</strong> ${isLeader ? 'Group Leader' : 'Member'}</p>
                 </div>
     `;
     
@@ -2257,9 +2257,9 @@ function showLeaveGroupModal(groupId) {
             modalHTML += `
                 <div class="transfer-leadership">
                     <h3>Trao quyền trưởng nhóm:</h3>
-                    <p>Bạn có muốn trao quyền trưởng nhóm cho thành viên khác không?</p>
+                    <p>Do you want to transfer leadership to another member?</p>
                     <div class="form-group">
-                        <label>Chọn thành viên mới:</label>
+                        <label>Select new member:</label>
                         <select id="newLeaderSelect">
                             ${otherMembers.map(member => `<option value="${member}">${member}</option>`).join('')}
                         </select>
@@ -2273,7 +2273,7 @@ function showLeaveGroupModal(groupId) {
         } else {
             modalHTML += `
                 <div class="no-members">
-                    <p><strong>Lưu ý:</strong> Bạn là thành viên duy nhất trong nhóm. Nếu rời nhóm, nhóm sẽ bị xóa.</p>
+                    <p><strong>Note:</strong> You are the only member in the group. If you leave, the group will be deleted.</p>
                     <div class="modal-actions">
                         <button class="btn btn-danger" onclick="deleteGroup(${groupId})">Xóa nhóm</button>
                         <button class="btn btn-secondary" onclick="closeModal('leaveGroupModal')">Hủy</button>
@@ -2310,7 +2310,7 @@ function leaveGroupAsLeader(groupId) {
     
     const newLeader = document.getElementById('newLeaderSelect').value;
     if (!newLeader) {
-        alert('Vui lòng chọn thành viên mới!');
+        alert('Please select a new member!');
         return;
     }
     
@@ -2348,11 +2348,11 @@ function showInviteNotificationsModal() {
         <div id="inviteNotificationsModal" class="modal">
             <div class="modal-content">
                 <span class="close" onclick="closeModal('inviteNotificationsModal')">&times;</span>
-                <h2>Thông báo lời mời vào nhóm</h2>
+                <h2>Group Invitation Notifications</h2>
                 <div>
     `;
     if (invitedGroups.length === 0) {
-        modalHTML += `<p>Bạn chưa có lời mời nào.</p>`;
+        modalHTML += `<p>You don't have any invitations yet.</p>`;
     } else {
         modalHTML += `
             <ul style="list-style:none;padding:0;">
