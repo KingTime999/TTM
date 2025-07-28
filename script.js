@@ -1,12 +1,12 @@
 // Demo accounts for testing
 const demoAccounts = {
     students: [
-        { email: "leader@student.com", password: "123456", role: "leader", name: "Nguyễn Văn A" },
-        { email: "member@student.com", password: "123456", role: "member", name: "Trần Thị B" },
-        { email: "member2@student.com", password: "123456", role: "member", name: "Lê Văn C" }
+        { email: "leader@student.com", password: "123456", role: "leader", name: "John Smith" },
+        { email: "member@student.com", password: "123456", role: "member", name: "Sarah Johnson" },
+        { email: "member2@student.com", password: "123456", role: "member", name: "Mike Davis" }
     ],
     lecturers: [
-        { email: "lecturer@teacher.com", password: "123456", name: "Dr. Phạm Văn D" }
+        { email: "lecturer@teacher.com", password: "123456", name: "Dr. Robert Wilson" }
     ]
 };
 
@@ -26,9 +26,9 @@ function initializeDemoData() {
     projects = [
         {
             id: 1,
-            name: "Dự án Web E-commerce",
-            description: "Xây dựng website bán hàng trực tuyến",
-            lecturer: "Dr. Phạm Văn D",
+            name: "Web E-commerce Project",
+            description: "Build an online shopping website",
+            lecturer: "Dr. Robert Wilson",
             status: "active",
             maxGroups: 5,
             deadline: "2024-05-30"
@@ -39,11 +39,11 @@ function initializeDemoData() {
     groups = [
         {
             id: 1,
-            name: "Nhóm 1 - Dự án Web",
+            name: "Group 1 - Web Project",
             projectId: 1,
-            topic: "Thiết kế giao diện người dùng",
-            leader: "Nguyễn Văn A",
-            members: ["Trần Thị B", "Lê Văn C"],
+            topic: "User Interface Design",
+            leader: "John Smith",
+            members: ["Sarah Johnson", "Mike Davis"],
             createdBy: "lecturer@teacher.com",
             status: "active",
             completedTasks: 0,
@@ -55,10 +55,10 @@ function initializeDemoData() {
     tasks = [
         {
             id: 1,
-            title: "Thiết kế giao diện",
-            description: "Tạo mockup cho trang chủ",
+            title: "Design Interface",
+            description: "Create mockup for homepage",
             groupId: 1,
-            assignedTo: "Trần Thị B",
+            assignedTo: "Sarah Johnson",
             status: "in-progress",
             deadline: "2024-02-15",
             priority: "high",
@@ -68,10 +68,10 @@ function initializeDemoData() {
         },
         {
             id: 2,
-            title: "Phát triển backend",
-            description: "Xây dựng API cho hệ thống",
+            title: "Develop Backend",
+            description: "Build API for the system",
             groupId: 1,
-            assignedTo: "Lê Văn C",
+            assignedTo: "Mike Davis",
             status: "pending",
             deadline: "2024-02-20",
             priority: "medium",
@@ -86,10 +86,10 @@ function initializeDemoData() {
         {
             id: 1,
             groupId: 1,
-            evaluator: "Trần Thị B",
-            evaluated: "Lê Văn C",
+            evaluator: "Sarah Johnson",
+            evaluated: "Mike Davis",
             score: 8,
-            comment: "Làm việc rất tích cực",
+            comment: "Works very actively",
             criteria: {
                 teamwork: 8,
                 responsibility: 9,
@@ -132,12 +132,12 @@ function loginStudent(event) {
     if (student) {
         currentUser = { ...student, type: 'student' };
         showDashboard();
-        // Chỉ member mới kiểm tra lời mời nhóm
+        // Only members check group invitations
         if (student.role === 'member') {
             checkInvitedGroups();
         }
     } else {
-        alert('Thông tin đăng nhập không chính xác!');
+        alert('Login information is incorrect!');
     }
 }
 
@@ -155,7 +155,7 @@ function loginLecturer(event) {
         showDashboard();
         checkInvitedGroups();
     } else {
-        alert('Thông tin đăng nhập không chính xác!');
+        alert('Login information is incorrect!');
     }
 }
 
@@ -168,8 +168,8 @@ function showDashboard() {
             <div class="dashboard-header">
                 <h1><i class="fas fa-tasks"></i> Task Manager Dashboard</h1>
                 <div class="user-info">
-                    <span>Xin chào, ${currentUser.name}</span>
-                    <button class="logout-btn" onclick="logout()">Đăng xuất</button>
+                    <span>Hello, ${currentUser.name}</span>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
                 </div>
             </div>
             <div class="dashboard-content">
@@ -200,11 +200,11 @@ function createLeaderDashboard() {
     }
     let dashboard = `
         <div class="section">
-            <label><b>Chọn nhóm:</b></label>
+            <label><b>Select Group:</b></label>
             <select id="groupSwitcher" onchange="switchGroup()">
                 ${myGroups.map(g => `<option value="${g.id}" ${g.id === selectedGroupId ? 'selected' : ''}>${g.name}</option>`).join('')}
             </select>
-            <button class="btn" onclick="showCreateGroupModal()">Tạo nhóm mới</button>
+            <button class="btn" onclick="showCreateGroupModal()">Create New Group</button>
         </div>
     `;
     if (myGroups.length > 0) {
@@ -215,48 +215,48 @@ function createLeaderDashboard() {
             dashboard += `
                 <div class="section">
                     <div class="card">
-                        <h3>Nhóm: ${myGroup.name}</h3>
-                        <p><strong>Đề tài:</strong> ${myGroup.topic}</p>
-                        <p><strong>Tiến độ:</strong> ${completedTasks}/${myGroup.totalTasks} task hoàn thành</p>
+                        <h3>Group: ${myGroup.name}</h3>
+                        <p><strong>Topic:</strong> ${myGroup.topic}</p>
+                        <p><strong>Progress:</strong> ${completedTasks}/${myGroup.totalTasks} tasks completed</p>
                         <div class="progress">
                             <div class="progress-bar" style="width: ${(completedTasks/myGroup.totalTasks)*100}%"></div>
                         </div>
-                        <button class="btn btn-info" onclick="showAddMemberModal(${myGroup.id})">Thêm thành viên</button>
-                        <button class="btn btn-danger" onclick="showLeaveGroupModal(${myGroup.id})">Rời nhóm</button>
-                        <button class="btn btn-warning" onclick="deleteGroup(${myGroup.id})">Xóa nhóm</button>
+                        <button class="btn btn-info" onclick="showAddMemberModal(${myGroup.id})">Add Member</button>
+                        <button class="btn btn-danger" onclick="showLeaveGroupModal(${myGroup.id})">Leave Group</button>
+                        <button class="btn btn-warning" onclick="deleteGroup(${myGroup.id})">Delete Group</button>
                         ${completedTasks >= myGroup.totalTasks ? 
-                            '<button class="btn btn-success" onclick="showFinalEvaluation()">Xem đánh giá cuối kỳ</button>' : 
-                            `<button class="btn" onclick="showCreateTaskModalForGroup(${myGroup.id})">Tạo task mới</button>`
+                            '<button class="btn btn-success" onclick="showFinalEvaluation()">View Final Evaluation</button>' : 
+                            `<button class="btn" onclick="showCreateTaskModalForGroup(${myGroup.id})">Create New Task</button>`
                         }
                     </div>
                 </div>
                 <div class="section">
-                    <h2>Thành viên nhóm</h2>
+                    <h2>Group Members</h2>
                     <ul style="margin-left:16px;">
-                        <li><b>${myGroup.leader} (Trưởng nhóm)</b></li>
+                        <li><b>${myGroup.leader} (Group Leader)</b></li>
                         ${myGroup.members.map(m => `
-                            <li>${m} <button class='btn btn-danger' style='margin-left:8px;padding:2px 8px;' onclick="removeMemberFromGroup(${myGroup.id}, '${m}')">Xóa</button></li>
+                            <li>${m} <button class='btn btn-danger' style='margin-left:8px;padding:2px 8px;' onclick="removeMemberFromGroup(${myGroup.id}, '${m}')">Remove</button></li>
                         `).join('')}
                     </ul>
                 </div>
                 <div class="section">
-                    <h2>Danh sách task của nhóm ${myGroup.name}</h2>
+                    <h2>Task List for Group ${myGroup.name}</h2>
                     ${renderTasksForGroup(myGroup.id)}
                 </div>
                 <div class="section">
-                    <h2>Thống kê nhóm ${myGroup.name}</h2>
+                    <h2>Group Statistics ${myGroup.name}</h2>
                     <div class="stats-grid">
                         <div class="stat-card">
                             <div class="stat-number">${groupTasks.length}</div>
-                            <div class="stat-label">Tổng số task</div>
+                            <div class="stat-label">Total Tasks</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number">${completedTasks}</div>
-                            <div class="stat-label">Task hoàn thành</div>
+                            <div class="stat-label">Completed Tasks</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-number">${groupTasks.length > 0 ? Math.round((completedTasks/groupTasks.length)*100) : 0}%</div>
-                            <div class="stat-label">% đã hoàn thành</div>
+                            <div class="stat-label">% Completed</div>
                         </div>
                     </div>
                 </div>
@@ -264,7 +264,7 @@ function createLeaderDashboard() {
         }
     }
     if (typeof renderMemberRequests === 'function') {
-        dashboard += `<div class="section"><h2>Yêu cầu tham gia nhóm</h2>${renderMemberRequests()}</div>`;
+        dashboard += `<div class="section"><h2>Group Join Requests</h2>${renderMemberRequests()}</div>`;
     }
     
     // Thêm phần đánh giá thành viên
@@ -273,9 +273,9 @@ function createLeaderDashboard() {
         if (myGroup) {
             dashboard += `
                 <div class="section">
-                    <h2>Bảng đánh giá thành viên</h2>
-                    <button class="btn btn-primary" onclick="showMemberEvaluationModal(${myGroup.id})">Tạo đánh giá thành viên</button>
-                    <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">Xem đánh giá</button>
+                    <h2>Member Evaluation Board</h2>
+                    <button class="btn btn-primary" onclick="showMemberEvaluationModal(${myGroup.id})">Create Member Evaluation</button>
+                    <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">View Evaluation</button>
                     <div id="memberEvaluationDisplay"></div>
                 </div>
             `;
@@ -286,19 +286,19 @@ function createLeaderDashboard() {
 }
 
 function createMemberDashboard() {
-    // Lấy tất cả nhóm mà member tham gia
+    // Get all groups that the member participates in
     const myGroups = groups.filter(g => g.members.includes(currentUser.name));
     if (myGroups.length > 0 && (!selectedGroupId || !myGroups.some(g => g.id === selectedGroupId))) {
         selectedGroupId = myGroups[0].id;
     }
     let dashboard = `
         <div class="section">
-            <label><b>Chọn nhóm:</b></label>
+            <label><b>Select Group:</b></label>
             <select id="groupSwitcher" onchange="switchGroup()">
                 ${myGroups.map(g => `<option value="${g.id}" ${g.id === selectedGroupId ? 'selected' : ''}>${g.name}</option>`).join('')}
             </select>
-            <button class="btn" onclick="showInviteNotificationsModal()">Thông báo</button>
-            <button class="btn" onclick="showJoinGroupModal()">Yêu cầu vào nhóm</button>
+            <button class="btn" onclick="showInviteNotificationsModal()">Notifications</button>
+            <button class="btn" onclick="showJoinGroupModal()">Request to Join Group</button>
         </div>
     `;
     if (myGroups.length > 0) {
@@ -306,30 +306,30 @@ function createMemberDashboard() {
         if (myGroup) {
             dashboard += `
                 <div class="card">
-                    <h3>Nhóm hiện tại: ${myGroup.name}</h3>
-                    <p><strong>Đề tài:</strong> ${myGroup.topic}</p>
-                    <p><strong>Trưởng nhóm:</strong> ${myGroup.leader}</p>
-                    <button class="btn btn-danger" onclick="showLeaveGroupModal(${myGroup.id})">Rời nhóm</button>
-                    <button class="btn btn-primary" onclick="showCreateTaskModalForGroup(${myGroup.id})">Tạo task mới</button>
+                    <h3>Current Group: ${myGroup.name}</h3>
+                    <p><strong>Topic:</strong> ${myGroup.topic}</p>
+                    <p><strong>Group Leader:</strong> ${myGroup.leader}</p>
+                    <button class="btn btn-danger" onclick="showLeaveGroupModal(${myGroup.id})">Leave Group</button>
+                    <button class="btn btn-primary" onclick="showCreateTaskModalForGroup(${myGroup.id})">Create New Task</button>
                 </div>
                 <div class="section">
-                    <h2>Task của tôi trong nhóm này</h2>
+                    <h2>My Tasks in This Group</h2>
                     ${renderMyTasksForGroup(myGroup.id)}
                 </div>
                 <div class="section">
-                    <h2>Tất cả task trong nhóm</h2>
+                    <h2>All Tasks in Group</h2>
                     ${renderTasksForGroup(myGroup.id)}
                 </div>
                 <div class="section">
-                    <h2>Đánh giá thành viên</h2>
-                    <button class="btn btn-primary" onclick="showMemberEvaluationModal(${myGroup.id})">Tạo đánh giá thành viên</button>
-                    <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">Xem đánh giá của tôi</button>
+                    <h2>Member Evaluation</h2>
+                    <button class="btn btn-primary" onclick="showMemberEvaluationModal(${myGroup.id})">Create Member Evaluation</button>
+                    <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">View My Evaluation</button>
                     <div id="memberEvaluationDisplay"></div>
                 </div>
             `;
         }
     } else {
-        dashboard += `<div class="section"><p>Bạn chưa tham gia nhóm nào.</p></div>`;
+        dashboard += `<div class="section"><p>You haven't joined any group yet.</p></div>`;
     }
     return dashboard;
 }
@@ -342,57 +342,57 @@ function createLecturerDashboard() {
                 <div class="ai-feature">
                     <i class="fas fa-clock"></i>
                     <h3>Auto Deadline</h3>
-                    <p>Tự động tạo deadline cho bài tập</p>
+                    <p>Automatically create deadlines for assignments</p>
                 </div>
                 <div class="ai-feature">
                     <i class="fas fa-users"></i>
                     <h3>Member Evaluation</h3>
-                    <p>Đánh giá tự động thành viên</p>
+                    <p>Automatic member evaluation</p>
                 </div>
                 <div class="ai-feature">
                     <i class="fas fa-chart-bar"></i>
                     <h3>Statistics</h3>
-                    <p>Thống kê tổng thể</p>
+                    <p>Overall statistics</p>
                 </div>
             </div>
         </div>
 
         <div class="section">
-            <h2>Quản lý dự án</h2>
-            <button class="btn" onclick="showCreateProjectModal()">Tạo dự án mới</button>
-            <button class="btn" onclick="showCreateGroupModal()">Tạo nhóm</button>
-            <button class="btn" onclick="showOverallEvaluationModal()">Đánh giá tổng thể</button>
+            <h2>Project Management</h2>
+            <button class="btn" onclick="showCreateProjectModal()">Create New Project</button>
+            <button class="btn" onclick="showCreateGroupModal()">Create Group</button>
+            <button class="btn" onclick="showOverallEvaluationModal()">Overall Evaluation</button>
         </div>
 
         <div class="section">
-            <h2>Danh sách dự án</h2>
+            <h2>Project List</h2>
             ${renderProjects()}
         </div>
 
         <div class="section">
-            <h2>Danh sách nhóm</h2>
+            <h2>Group List</h2>
             ${renderGroups()}
         </div>
 
         <div class="section">
-            <h2>Yêu cầu tham gia nhóm</h2>
+            <h2>Group Join Requests</h2>
             ${renderMemberRequests()}
         </div>
 
         <div class="section">
-            <h2>Thống kê tổng thể</h2>
+            <h2>Overall Statistics</h2>
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-number">${projects.length}</div>
-                    <div class="stat-label">Tổng số dự án</div>
+                    <div class="stat-label">Total Projects</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number">${groups.length}</div>
-                    <div class="stat-label">Tổng số nhóm</div>
+                    <div class="stat-label">Total Groups</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number">${tasks.length}</div>
-                    <div class="stat-label">Tổng số bài tập</div>
+                    <div class="stat-label">Total Assignments</div>
                 </div>
             </div>
         </div>
@@ -402,18 +402,18 @@ function createLecturerDashboard() {
 // Render functions
 function renderProjects() {
     if (projects.length === 0) {
-        return '<p>Chưa có dự án nào.</p>';
+        return '<p>No projects yet.</p>';
     }
 
     return `
         <table class="table">
             <thead>
                 <tr>
-                    <th>Tên dự án</th>
-                    <th>Mô tả</th>
+                    <th>Project Name</th>
+                    <th>Description</th>
                     <th>Deadline</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -424,8 +424,8 @@ function renderProjects() {
                         <td>${project.deadline}</td>
                         <td><span class="status ${project.status}">${project.status}</span></td>
                         <td>
-                            <button class="btn btn-secondary" onclick="viewProject(${project.id})">Xem</button>
-                            <button class="btn btn-warning" onclick="editProject(${project.id})">Sửa</button>
+                            <button class="btn btn-secondary" onclick="viewProject(${project.id})">View</button>
+                            <button class="btn btn-warning" onclick="editProject(${project.id})">Edit</button>
                         </td>
                     </tr>
                 `).join('')}
