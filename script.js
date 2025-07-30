@@ -305,7 +305,7 @@ function createLeaderDashboard() {
                     <div id="memberEvaluationDisplay"></div>
                 </div>
                 <div class="section">
-                    <h2>Thống kê nhóm Lập Trình Web - Dự án Website</h2>
+                    <h2>Web Programming Team Statistics - Website Project</h2>
                     ${generateGroupStatistics(myGroup.id)}
                 </div>
             `;
@@ -357,7 +357,7 @@ function createMemberDashboard() {
                     <div id="memberEvaluationDisplay"></div>
                 </div>
                 <div class="section">
-                    <h2>Thống kê nhóm Lập Trình Web - Dự án Website</h2>
+                    <h2>Web Programming Team Statistics - Website Project</h2>
                     ${generateGroupStatistics(myGroup.id)}
                 </div>
             `;
@@ -1417,7 +1417,7 @@ function generateEvaluationStats(evaluations) {
 // Hàm tạo thống kê nhóm như trong hình
 function generateGroupStatistics(groupId) {
     const group = groups.find(g => g.id === groupId);
-    if (!group) return '<p>Không tìm thấy thông tin nhóm</p>';
+    if (!group) return '<p>Group information not found</p>';
     
     // Lấy tất cả task của nhóm
     const groupTasks = tasks.filter(t => t.groupId === groupId);
@@ -1447,28 +1447,28 @@ function generateGroupStatistics(groupId) {
             <div class="stats-overview">
                 <div class="stat-card">
                     <div class="stat-number">${totalTasks}</div>
-                    <div class="stat-label">Tổng số task</div>
+                    <div class="stat-label">Total Tasks</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number">${completedTasks}</div>
-                    <div class="stat-label">Task hoàn thành</div>
+                    <div class="stat-label">Completed Tasks</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-number">${completionRate}%</div>
-                    <div class="stat-label">% đã hoàn thành</div>
+                    <div class="stat-label">% Completed</div>
                 </div>
             </div>
         </div>
         
         <div class="section">
-            <h3>Thống kê đóng góp thành viên</h3>
+            <h3>Member Contribution Statistics</h3>
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Thành viên</th>
-                        <th>Số task được giao</th>
-                        <th>Số task hoàn thành</th>
-                        <th>Tỷ lệ hoàn thành (%)</th>
+                        <th>Member</th>
+                        <th>Tasks Assigned</th>
+                        <th>Tasks Completed</th>
+                        <th>Completion Rate (%)</th>
                     </tr>
                 </thead>
                 <tbody>
