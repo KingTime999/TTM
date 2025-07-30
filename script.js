@@ -46,8 +46,8 @@ function initializeDemoData() {
             members: ["Ngô Khải Luân", "Phạm Lê Duy Bảo"],
             createdBy: "lecturer@teacher.com",
             status: "active",
-            completedTasks: 0,
-            totalTasks: 10
+            completedTasks: 2,
+            totalTasks: 4
         }
     ];
 
@@ -72,10 +72,36 @@ function initializeDemoData() {
             description: "Build API for the system",
             groupId: 1,
             assignedTo: "Phạm Lê Duy Bảo",
-            status: "pending",
+            status: "completed",
             deadline: "2024-02-20",
             priority: "medium",
             startTime: "2024-02-05",
+            completedTime: "2024-02-18",
+            extensionRequests: []
+        },
+        {
+            id: 3,
+            title: "Database Design",
+            description: "Design and implement database schema",
+            groupId: 1,
+            assignedTo: "Lê Tấn Nguyện",
+            status: "completed",
+            deadline: "2024-02-10",
+            priority: "high",
+            startTime: "2024-02-01",
+            completedTime: "2024-02-08",
+            extensionRequests: []
+        },
+        {
+            id: 4,
+            title: "Frontend Development",
+            description: "Implement user interface components",
+            groupId: 1,
+            assignedTo: "Ngô Khải Luân",
+            status: "in-progress",
+            deadline: "2024-02-25",
+            priority: "medium",
+            startTime: "2024-02-10",
             completedTime: null,
             extensionRequests: []
         }
@@ -278,6 +304,10 @@ function createLeaderDashboard() {
                     <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">View Evaluation</button>
                     <div id="memberEvaluationDisplay"></div>
                 </div>
+                <div class="section">
+                    <h2>Thống kê nhóm Lập Trình Web - Dự án Website</h2>
+                    ${generateGroupStatistics(myGroup.id)}
+                </div>
             `;
         }
     }
@@ -325,6 +355,10 @@ function createMemberDashboard() {
                     <button class="btn btn-primary" onclick="showMemberEvaluationModal(${myGroup.id})">Create Member Evaluation</button>
                     <button class="btn btn-info" onclick="viewMemberEvaluation(${myGroup.id})">View My Evaluation</button>
                     <div id="memberEvaluationDisplay"></div>
+                </div>
+                <div class="section">
+                    <h2>Thống kê nhóm Lập Trình Web - Dự án Website</h2>
+                    ${generateGroupStatistics(myGroup.id)}
                 </div>
             `;
         }
@@ -1378,6 +1412,78 @@ function generateEvaluationStats(evaluations) {
     statsHTML += '</div>';
     
     return statsHTML;
+}
+
+// Hàm tạo thống kê nhóm như trong hình
+function generateGroupStatistics(groupId) {
+    const group = groups.find(g => g.id === groupId);
+    if (!group) return '<p>Không tìm thấy thông tin nhóm</p>';
+    
+    // Lấy tất cả task của nhóm
+    const groupTasks = tasks.filter(t => t.groupId === groupId);
+    const completedTasks = groupTasks.filter(t => t.status === 'completed').length;
+    const totalTasks = groupTasks.length;
+    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    
+    // Tạo danh sách thành viên (leader + members)
+    const allMembers = [group.leader, ...group.members];
+    
+    // Tính thống kê cho từng thành viên
+    const memberStats = allMembers.map(member => {
+        const memberTasks = groupTasks.filter(t => t.assignedTo === member);
+        const completedMemberTasks = memberTasks.filter(t => t.status === 'completed').length;
+        const memberCompletionRate = memberTasks.length > 0 ? Math.round((completedMemberTasks / memberTasks.length) * 100) : 0;
+        
+        return {
+            name: member,
+            assignedTasks: memberTasks.length,
+            completedTasks: completedMemberTasks,
+            completionRate: memberCompletionRate
+        };
+    });
+    
+    return `
+        <div class="section">
+            <div class="stats-overview">
+                <div class="stat-card">
+                    <div class="stat-number">${totalTasks}</div>
+                    <div class="stat-label">Tổng số task</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${completedTasks}</div>
+                    <div class="stat-label">Task hoàn thành</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${completionRate}%</div>
+                    <div class="stat-label">% đã hoàn thành</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h3>Thống kê đóng góp thành viên</h3>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Thành viên</th>
+                        <th>Số task được giao</th>
+                        <th>Số task hoàn thành</th>
+                        <th>Tỷ lệ hoàn thành (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${memberStats.map(member => `
+                        <tr>
+                            <td>${member.name}</td>
+                            <td>${member.assignedTasks}</td>
+                            <td>${member.completedTasks}</td>
+                            <td>${member.completionRate}%</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
 }
 
 // Hàm xem chi tiết task

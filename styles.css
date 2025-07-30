@@ -469,6 +469,31 @@ body {
     font-size: 0.9rem;
 }
 
+/* Thống kê nhóm styles */
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 20px 0;
+}
+
+.stats-overview .stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.stats-overview .stat-number {
+    color: white;
+    font-size: 3rem;
+    font-weight: bold;
+}
+
+.stats-overview .stat-label {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
 /* Group Info Table Styles */
 .group-info-table {
     margin: 20px 0;
